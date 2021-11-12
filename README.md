@@ -1,6 +1,6 @@
 # Stomper
 
-A Go message broker implementing the [STOMP protocol](https://stomp.github.io/stomp-specification-1.2.html).
+A Go message queue implementing the [STOMP protocol](https://stomp.github.io/stomp-specification-1.2.html).
 
 ## Done
 
