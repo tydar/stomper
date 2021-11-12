@@ -1,6 +1,6 @@
 # Stomper
 
-[![Actions Status](https://github.com/tydar/stomper/workflows/go.yml/badge.svg)](https://github.com/tydar/stomper/actions)
+![Actions Status](https://github.com/tydar/stomper/actions/workflows/go.yml/badge.svg)
 
 A Go message queue implementing the [STOMP protocol](https://stomp.github.io/stomp-specification-1.2.html).
 
