@@ -136,3 +136,22 @@ func parseHeader(header string) (string, string, error) {
     }
     return tokens[0], tokens[1], nil
 }
+
+func UnmarshalFrame(frame Frame) string { 
+    acc := frame.Command + "\n"
+    if len(frame.Headers) == 0 {
+        acc = acc + "\n"
+    } else {
+        for k, v := range frame.Headers {
+            acc = acc + k + ":" + v + "\n"
+        }
+        acc = acc + "\n"
+    }
+
+    if len(frame.Body) > 0 {
+        acc = acc + frame.Body + "\000"
+    } else {
+        acc = acc + "\000"
+    }
+    return acc
+}
