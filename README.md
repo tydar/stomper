@@ -7,12 +7,31 @@ A Go message queue implementing the [STOMP protocol](https://stomp.github.io/sto
 ## Done
 
 * Frame parsing
+* Define interface for queueing
+* Implement memory queue backend
 
 ## TODO
 
 * Server connection protocol
-* Define interface for queueing
-* Implement memory queue backend
+    * Manage connections
+    * TTL protocol
+    * Size limits?
 * Define semantics beyond STOMP protocol
+* Implement frame actions
+    * SEND
+    * SUBSCRIBE
+    * UNSUBSCRIBE
+    * BEGIN
+    * COMMIT
+    * ABORT
+    * ACK
+    * NACK
+    * DISCONNECT
+    * MESSAGE
+    * RECEIPT
+    * ERROR
+* Define server initialization
+    * When are topics defined?
+    * What needs to be configured to enable connections?
 
 
