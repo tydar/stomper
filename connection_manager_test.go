@@ -2,86 +2,86 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"net"
 	"reflect"
 	"strings"
 	"testing"
-    "io"
-    "bytes"
 
-    "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 func TestConnectionManager(t *testing.T) {
 	messages := make(chan CnxMgrMsg)
 	cm := NewConnectionManager("", 2000, messages)
-    err := cm.Start()
-    if err != nil {
-        t.Error("error starting cnx manager", err)
-    }
+	err := cm.Start()
+	if err != nil {
+		t.Error("error starting cnx manager", err)
+	}
 
-    t.Run("_ConnectAndRead", func(t *testing.T) {
-        conn, err := net.Dial("tcp", ":2000")
-        if err != nil {
-            t.Error("could not connect to server: ", err)
-        }
-        message := <-messages
+	t.Run("_ConnectAndRead", func(t *testing.T) {
+		conn, err := net.Dial("tcp", ":2000")
+		if err != nil {
+			t.Error("could not connect to server: ", err)
+		}
+		message := <-messages
 
-        if message.Type != NEW_CONNECTION {
-            t.Error("ConnectionManager did not send message")
-        }
-        conn.Close()
-        message = <-messages
-    })
+		if message.Type != NEW_CONNECTION {
+			t.Error("ConnectionManager did not send message")
+		}
+		conn.Close()
+		message = <-messages
+	})
 
-    t.Run("_Write", func(t *testing.T) {
-        conn, err := net.Dial("tcp", ":2000")
-        if err != nil {
-            t.Error("could not connect to server: ", err)
-        }
-        msg := <-messages
+	t.Run("_Write", func(t *testing.T) {
+		conn, err := net.Dial("tcp", ":2000")
+		if err != nil {
+			t.Error("could not connect to server: ", err)
+		}
+		msg := <-messages
 
-        if msg.Type != NEW_CONNECTION {
-            t.Errorf("Did not receive new connection message from ConnectionManager: %d %s", msg.Type, msg.Msg)
-        }
+		if msg.Type != NEW_CONNECTION {
+			t.Errorf("Did not receive new connection message from ConnectionManager: %d %s", msg.Type, msg.Msg)
+		}
 
-        id := msg.Msg
-        uuid, err := uuid.Parse(id)
-        if err != nil {
-            t.Error("error getting uuid: ", err)
-        }
+		id := msg.Msg
+		uuid, err := uuid.Parse(id)
+		if err != nil {
+			t.Error("error getting uuid: ", err)
+		}
 
-        err = cm.Write(uuid, "Test\n")
-        if err != nil {
-            t.Error("write error: ", err)
-        }
+		err = cm.Write(uuid, "Test\n")
+		if err != nil {
+			t.Error("write error: ", err)
+		}
 
-        b := bytes.NewBuffer([]byte{})
-        _, err = io.CopyN(b, conn, 5)
-        if err != nil {
-            t.Error("read error: ", err)
-        }
+		b := bytes.NewBuffer([]byte{})
+		_, err = io.CopyN(b, conn, 5)
+		if err != nil {
+			t.Error("read error: ", err)
+		}
 
-        if b.String() != "Test\n" {
-            t.Errorf("got %s wanted Test\n", b.String())
-        }
-        conn.Close()
-        msg = <-messages
-    })
+		if b.String() != "Test\n" {
+			t.Errorf("got %s wanted Test\n", b.String())
+		}
+		conn.Close()
+		msg = <-messages
+	})
 
-    t.Run("_handleRemovals", func(t *testing.T) {
-        conn, err := net.Dial("tcp", ":2000")
-        if err != nil {
-            t.Error("could not connect to server: ", err)
-        }
-        msg := <-messages
-        conn.Close()
-        msg = <-messages
-        if msg.Type != CONNECTION_CLOSED {
-            t.Error("connection failed to close or another message sent")
-        }
-    })
+	t.Run("_handleRemovals", func(t *testing.T) {
+		conn, err := net.Dial("tcp", ":2000")
+		if err != nil {
+			t.Error("could not connect to server: ", err)
+		}
+		msg := <-messages
+		conn.Close()
+		msg = <-messages
+		if msg.Type != CONNECTION_CLOSED {
+			t.Error("connection failed to close or another message sent")
+		}
+	})
 }
 
 func TestScanNullTerm(t *testing.T) {

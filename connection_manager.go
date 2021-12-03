@@ -21,7 +21,7 @@ import (
 
 // ConnectionManager
 type ConnectionManager struct {
-    listener    net.Listener
+	listener    net.Listener
 	hostname    string
 	port        int
 	connections map[uuid.UUID]*Connection
@@ -31,7 +31,7 @@ type ConnectionManager struct {
 
 func NewConnectionManager(hostname string, port int, messages chan CnxMgrMsg) *ConnectionManager {
 	return &ConnectionManager{
-        listener:    nil,
+		listener:    nil,
 		hostname:    hostname,
 		port:        port,
 		connections: make(map[uuid.UUID]*Connection),
@@ -44,9 +44,9 @@ func (cm *ConnectionManager) Start() error {
 	if err != nil {
 		return err
 	}
-    cm.mu.Lock()
-    cm.listener = l
-    cm.mu.Unlock()
+	cm.mu.Lock()
+	cm.listener = l
+	cm.mu.Unlock()
 
 	// since the main loop will wait on new connections, we need to start a goroutine
 	// to handle any connections that notify us of a deletion request
@@ -78,7 +78,7 @@ func (cm *ConnectionManager) Start() error {
 }
 
 func (cm *ConnectionManager) Stop() error {
-    return cm.listener.Close()
+	return cm.listener.Close()
 }
 
 func (cm *ConnectionManager) Write(id uuid.UUID, msg string) error {
@@ -98,10 +98,10 @@ func (cm *ConnectionManager) handleRemovals(requests chan uuid.UUID) {
 		cm.mu.Lock()
 		delete(cm.connections, id)
 		cm.mu.Unlock()
-        cm.messages <- CnxMgrMsg{
-            Type: CONNECTION_CLOSED,
-            Msg: id.String(),
-        }
+		cm.messages <- CnxMgrMsg{
+			Type: CONNECTION_CLOSED,
+			Msg:  id.String(),
+		}
 	}
 }
 
