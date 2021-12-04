@@ -70,7 +70,7 @@ func (cm *ConnectionManager) Start() error {
 
 			cm.messages <- CnxMgrMsg{
 				Type: NEW_CONNECTION,
-                ID:   thisUUID,
+				ID:   thisUUID,
 				Msg:  thisUUID.String(),
 			}
 		}
@@ -101,7 +101,7 @@ func (cm *ConnectionManager) handleRemovals(requests chan uuid.UUID) {
 		cm.mu.Unlock()
 		cm.messages <- CnxMgrMsg{
 			Type: CONNECTION_CLOSED,
-            ID:   id,
+			ID:   id,
 			Msg:  id.String(),
 		}
 	}
@@ -128,9 +128,9 @@ func (c *Connection) Read(readTo chan CnxMgrMsg, done chan uuid.UUID) {
 			break
 		}
 		readTo <- CnxMgrMsg{
-            Type: FRAME,
-            ID:   c.id,
-			Msg: (scanner.Text() + "\000"), // have to append the null byte that the scanner strips
+			Type: FRAME,
+			ID:   c.id,
+			Msg:  (scanner.Text() + "\000"), // have to append the null byte that the scanner strips
 		}
 	}
 	done <- c.id
@@ -151,7 +151,7 @@ const (
 
 type CnxMgrMsg struct {
 	Type int
-    ID   uuid.UUID
+	ID   uuid.UUID
 	Msg  string
 }
 
