@@ -17,14 +17,14 @@ import (
 // * want to ensure TCP connections stay decoupled from the main protocol engine
 // * so only connections are managed here -- subscriptions, parsing, etc are elsewhere
 // * need one goroutine to own each connection.
-// * potential type answer: connections map[uuid.UUID]Connection
+// * potential type answer: connections map[string]Connection
 
 // ConnectionManager
 type ConnectionManager struct {
 	listener    net.Listener
 	hostname    string
 	port        int
-	connections map[uuid.UUID]*Connection
+	connections map[string]*Connection
 	messages    chan CnxMgrMsg
 	mu          sync.RWMutex
 }
@@ -34,7 +34,7 @@ func NewConnectionManager(hostname string, port int, messages chan CnxMgrMsg) *C
 		listener:    nil,
 		hostname:    hostname,
 		port:        port,
-		connections: make(map[uuid.UUID]*Connection),
+		connections: make(map[string]*Connection),
 		messages:    messages,
 	}
 }
@@ -50,7 +50,7 @@ func (cm *ConnectionManager) Start() error {
 
 	// since the main loop will wait on new connections, we need to start a goroutine
 	// to handle any connections that notify us of a deletion request
-	removeConnectionChan := make(chan uuid.UUID)
+	removeConnectionChan := make(chan string)
 	go cm.handleRemovals(removeConnectionChan)
 
 	// this avoids tests being blocked
@@ -62,7 +62,7 @@ func (cm *ConnectionManager) Start() error {
 				log.Fatal(err)
 			}
 
-			thisUUID := uuid.New()
+			thisUUID := uuid.NewString()
 			cm.mu.Lock()
 			cm.connections[thisUUID] = NewConnection(conn, thisUUID)
 			go cm.connections[thisUUID].Read(cm.messages, removeConnectionChan)
@@ -71,7 +71,7 @@ func (cm *ConnectionManager) Start() error {
 			cm.messages <- CnxMgrMsg{
 				Type: NEW_CONNECTION,
 				ID:   thisUUID,
-				Msg:  thisUUID.String(),
+				Msg:  thisUUID,
 			}
 		}
 	}()
@@ -82,7 +82,7 @@ func (cm *ConnectionManager) Stop() error {
 	return cm.listener.Close()
 }
 
-func (cm *ConnectionManager) Write(id uuid.UUID, msg string) error {
+func (cm *ConnectionManager) Write(id string, msg string) error {
 	cm.mu.RLock()
 	connection, prs := cm.connections[id]
 	cm.mu.RUnlock()
@@ -94,7 +94,7 @@ func (cm *ConnectionManager) Write(id uuid.UUID, msg string) error {
 	return connection.Write(msg)
 }
 
-func (cm *ConnectionManager) handleRemovals(requests chan uuid.UUID) {
+func (cm *ConnectionManager) handleRemovals(requests chan string) {
 	for id := range requests {
 		cm.mu.Lock()
 		delete(cm.connections, id)
@@ -102,25 +102,25 @@ func (cm *ConnectionManager) handleRemovals(requests chan uuid.UUID) {
 		cm.messages <- CnxMgrMsg{
 			Type: CONNECTION_CLOSED,
 			ID:   id,
-			Msg:  id.String(),
+			Msg:  id,
 		}
 	}
 }
 
 // Connection
 type Connection struct {
-	id   uuid.UUID
+	id   string
 	conn net.Conn
 }
 
-func NewConnection(conn net.Conn, id uuid.UUID) *Connection {
+func NewConnection(conn net.Conn, id string) *Connection {
 	return &Connection{
 		conn: conn,
 		id:   id,
 	}
 }
 
-func (c *Connection) Read(readTo chan CnxMgrMsg, done chan uuid.UUID) {
+func (c *Connection) Read(readTo chan CnxMgrMsg, done chan string) {
 	scanner := bufio.NewScanner(c.conn)
 	scanner.Split(ScanNullTerm)
 	for {
@@ -151,7 +151,7 @@ const (
 
 type CnxMgrMsg struct {
 	Type int
-	ID   uuid.UUID
+	ID   string
 	Msg  string
 }
 

@@ -9,8 +9,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 func TestConnectionManager(t *testing.T) {
@@ -47,12 +45,7 @@ func TestConnectionManager(t *testing.T) {
 		}
 
 		id := msg.Msg
-		uuid, err := uuid.Parse(id)
-		if err != nil {
-			t.Error("error getting uuid: ", err)
-		}
-
-		err = cm.Write(uuid, "Test\n")
+		err = cm.Write(id, "Test\n")
 		if err != nil {
 			t.Error("write error: ", err)
 		}

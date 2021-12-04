@@ -1,13 +1,12 @@
 package main
 
 import (
-	"github.com/google/uuid"
 	"log"
 )
 
 type Engine struct {
 	CM       *ConnectionManager
-	Clients  []uuid.UUID // may want to spin this off to its own Client type or ClientManager interface
+	Clients  []string // may want to spin this off to its own Client type or ClientManager interface
 	Incoming chan CnxMgrMsg
 	Store    *Store
 }
@@ -17,7 +16,7 @@ func NewEngine(st Store, cm *ConnectionManager, inc chan CnxMgrMsg) *Engine {
 		CM:       cm,
 		Store:    &st,
 		Incoming: inc,
-		Clients:  make([]uuid.UUID, 0),
+		Clients:  make([]string, 0),
 	}
 }
 
@@ -39,20 +38,24 @@ func (e *Engine) Start() error {
 			switch frame.Command {
 			case CONNECT:
 			case STOMP:
-				response := UnmarshalFrame(Frame{
-					Command: CONNECTED,
-					Headers: map[string]string{"version": "1.2"},
-					Body:    "",
-				})
+				response := e.handleConnect(msg)
 				err = e.CM.Write(msg.ID, response)
 				if err != nil {
 					log.Fatal(err)
 					//see above
 				}
-				e.Clients = append(e.Clients, msg.ID)
 			}
 		}
 	}
 
 	return nil
+}
+
+func (e *Engine) handleConnect(msg CnxMgrMsg) string {
+	// e.handleConnect takes a CONNECT or STOMP frame and produces a CONNECTED frame
+	return UnmarshalFrame(Frame{
+		Command: CONNECTED,
+		Headers: map[string]string{"version": "1.2"},
+		Body:    "",
+	})
 }
