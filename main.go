@@ -1,15 +1,16 @@
 package main
 
-import (
-	"fmt"
-	"reflect"
-)
+import "log"
 
 func main() {
-	f, err := ParseFrame("SEND\n\n\000")
-	f2 := Frame{Command: "SEND", Headers: make(map[string]string), Body: ""}
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(reflect.DeepEqual(f, f2))
+    comms := make(chan CnxMgrMsg)
+    cm := NewConnectionManager("", 2000, comms)
+    st := &MemoryStore{
+        Queues: make(map[string][]Frame),
+    }
+    e := NewEngine(st, cm, comms)
+    err := e.Start()
+    if err != nil {
+        log.Fatal(err)
+    }
 }
