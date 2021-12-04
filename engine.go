@@ -6,7 +6,7 @@ import (
 
 type Engine struct {
 	CM       *ConnectionManager
-	Clients  []string // may want to spin this off to its own Client type or ClientManager interface
+    SM       *SubscriptionManager
 	Incoming chan CnxMgrMsg
 	Store    *Store
 }
@@ -16,7 +16,7 @@ func NewEngine(st Store, cm *ConnectionManager, inc chan CnxMgrMsg) *Engine {
 		CM:       cm,
 		Store:    &st,
 		Incoming: inc,
-		Clients:  make([]string, 0),
+        SM:       NewSubscriptionManager(),
 	}
 }
 
@@ -44,6 +44,8 @@ func (e *Engine) Start() error {
 					log.Fatal(err)
 					//see above
 				}
+            case SUBSCRIBE:
+                e.handleSubscribe(msg, frame)
 			}
 		}
 	}
@@ -58,4 +60,18 @@ func (e *Engine) handleConnect(msg CnxMgrMsg) string {
 		Headers: map[string]string{"version": "1.2"},
 		Body:    "",
 	})
+}
+
+func (e *Engine) handleSubscribe(msg CnxMgrMsg, frame Frame) {
+    clientID := msg.ID
+    subID, prs := frame.Headers["id"]
+    if !prs {
+        log.Printf("Error: no id header on susbcribe message")
+    }
+    dest, prs := frame.Headers["destination"]
+    if !prs {
+        log.Printf("Error: no id header on susbcribe message")
+    }
+    // TODO: add destination validation
+    e.SM.Subscribe(clientID, subID, dest) 
 }
