@@ -35,9 +35,6 @@ A Go message queue implementing the [STOMP protocol](https://stomp.github.io/sto
 * Define server initialization
     * When are topics defined?
     * What needs to be configured to enable connections?
-
-### Connection Manager
-
-The *connection manager* listens for incoming TCP messages, maintains a list of active connections, and handles keeping open
-or closing connections as needed. It also contains the logic for when to send data to the engine by scanning for null terminated
-frames. It sends those to the engine for parsing.
+* Rewrite parsing information. Does not conform to this direction from the standard:
+    * If a content-length header is included, this number of octets MUST be read, regardless of whether or not there are NULL octets in the body.
+    * This is because the scanner used by ConnectionManager to tokenize input into frames will stop reading at the first null octet.
