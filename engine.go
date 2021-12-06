@@ -55,6 +55,15 @@ func (e *Engine) Start() error {
                         log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
                     }
                 }
+            case UNSUBSCRIBE:
+                err = e.handleUnsubscribe(msg, frame)
+                if err != nil {
+                    log.Println(err)
+                    err2 := e.handleError(msg, err)
+                    if err2 != nil {
+                        log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
+                    }
+                }
 			}
 		}
 	}
@@ -81,8 +90,18 @@ func (e *Engine) handleSubscribe(msg CnxMgrMsg, frame Frame) error {
         return fmt.Errorf("Error: client %s: no destination on SUBSCRIBE frame", msg.ID)
 	}
 	// TODO: add destination validation
-	e.SM.Subscribe(clientID, subID, dest)
-    return nil
+	return e.SM.Subscribe(clientID, subID, dest)
+}
+
+func (e *Engine) handleUnsubscribe(msg CnxMgrMsg, frame Frame) error {
+	clientID := msg.ID
+	subID, prs := frame.Headers["id"]
+
+	if !prs {
+        return fmt.Errorf("Error: client %s: no ID on UNSUBSCRIBE frame", msg.ID)
+	}
+
+    return e.SM.Unsubscribe(clientID, subID)
 }
 
 func (e *Engine) handleError(msg CnxMgrMsg, err error) error {
