@@ -27,7 +27,7 @@ func (sm *SubscriptionManager) Subscribe(clientID string, subID string, dest str
 		Destination: dest,
 		ClientID:    clientID,
 	}
-	log.Printf("Sub %s from client %s to dest %s\n", subID, clientID, dest)
+    log.Printf("NEW_SUBSCRIPTION: Sub %s from client %s to dest %s\n", subID, clientID, dest)
 	return nil
 }
 

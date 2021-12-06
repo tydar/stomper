@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+    "fmt"
 )
 
 type Engine struct {
@@ -31,9 +32,11 @@ func (e *Engine) Start() error {
 		if msg.Type == FRAME {
 			frame, err := ParseFrame(msg.Msg)
 			if err != nil {
-				// for now, just stop if we get an error
-				// need to handle sending ERROR frames and moving on later
-				log.Fatal(err)
+                log.Printf("ERROR: client %s and error %s\n", msg.ID, err)
+                err2 := e.handleError(msg, err)
+                if err2 != nil {
+                    log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
+                }
 			}
 			switch frame.Command {
 			case CONNECT:
@@ -41,15 +44,20 @@ func (e *Engine) Start() error {
 				response := e.handleConnect(msg)
 				err = e.CM.Write(msg.ID, response)
 				if err != nil {
-					log.Fatal(err)
-					//see above
+                    log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
 				}
 			case SUBSCRIBE:
-				e.handleSubscribe(msg, frame)
+				err = e.handleSubscribe(msg, frame)
+                if err != nil {
+                    log.Println(err)
+                    err2 := e.handleError(msg, err)
+                    if err2 != nil {
+                        log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
+                    }
+                }
 			}
 		}
 	}
-
 	return nil
 }
 
@@ -62,16 +70,26 @@ func (e *Engine) handleConnect(msg CnxMgrMsg) string {
 	})
 }
 
-func (e *Engine) handleSubscribe(msg CnxMgrMsg, frame Frame) {
+func (e *Engine) handleSubscribe(msg CnxMgrMsg, frame Frame) error {
 	clientID := msg.ID
 	subID, prs := frame.Headers["id"]
 	if !prs {
-		log.Printf("Error: no id header on susbcribe message")
+        return fmt.Errorf("Error: client %s: no ID on SUBSCRIBE frame", msg.ID)
 	}
 	dest, prs := frame.Headers["destination"]
 	if !prs {
-		log.Printf("Error: no id header on susbcribe message")
+        return fmt.Errorf("Error: client %s: no destination on SUBSCRIBE frame", msg.ID)
 	}
 	// TODO: add destination validation
 	e.SM.Subscribe(clientID, subID, dest)
+    return nil
+}
+
+func (e *Engine) handleError(msg CnxMgrMsg, err error) error {
+    eFrame := UnmarshalFrame(Frame{
+        Command: ERROR,
+        Headers: map[string]string{"message": err.Error(),},
+        Body: "Original frame: " + msg.Msg,
+    })
+    return e.CM.Write(msg.ID, eFrame)
 }
