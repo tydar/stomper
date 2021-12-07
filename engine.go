@@ -87,7 +87,7 @@ func (e *Engine) handleConnect(msg CnxMgrMsg) string {
 	// e.handleConnect takes a CONNECT or STOMP frame and produces a CONNECTED frame
 	return UnmarshalFrame(Frame{
 		Command: CONNECTED,
-		Headers: map[string]string{"accept-version": "1.2"},
+        Headers: map[string]string{"accept-version": "1.2", "host": e.CM.hostname,},
 		Body:    "",
 	})
 }
