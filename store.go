@@ -34,12 +34,13 @@ func (m *MemoryStore) Enqueue(destination string, message Frame) error {
 }
 
 func (m *MemoryStore) Pop(destination string) (Frame, error) {
+	l, err := m.Len(destination)
 	m.Lock()
 	defer m.Unlock()
-	l, err := m.Len(destination)
 	if l == 0 {
 		return Frame{}, errors.New("Destination queue empty.")
 	}
+
 	if err != nil {
 		return Frame{}, err
 	}
@@ -51,9 +52,8 @@ func (m *MemoryStore) Pop(destination string) (Frame, error) {
 }
 
 func (m *MemoryStore) Len(destination string) (int, error) {
-	// do we need to lock the mutex here? if it is called within Pop, the mutex will be locked
-	// but if it is called in another context it may not be
-	// which could give us trouble. Will have to write with this in mind.
+	m.Lock()
+	defer m.Unlock()
 	q, prs := m.Queues[destination]
 	if !prs {
 		return -1, errors.New("No such destination.")
@@ -63,8 +63,8 @@ func (m *MemoryStore) Len(destination string) (int, error) {
 }
 
 func (m *MemoryStore) Destinations() []string {
-	// also not locking the Mutex for here for now
-	// will reconsider if race conditions seem possible
+	m.Lock()
+	defer m.Unlock()
 	keys := make([]string, len(m.Queues))
 	i := 0
 

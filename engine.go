@@ -60,7 +60,8 @@ func (e *Engine) Start() error {
 								Body:    messageFrame.Body,
 							}
 							uniqueFrame.Headers["subscription"] = sub.ID
-							errWrite := e.CM.Write(sub.ClientID, UnmarshalFrame(messageFrame))
+							messageString := UnmarshalFrame(uniqueFrame)
+							errWrite := e.CM.Write(sub.ClientID, messageString)
 							if errWrite != nil {
 								log.Printf("ERROR: client %s: MESSAGE send failed\n", subscribers[i])
 							}
