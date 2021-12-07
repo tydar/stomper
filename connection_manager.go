@@ -39,6 +39,12 @@ func NewConnectionManager(hostname string, port int, messages chan CnxMgrMsg) *C
 	}
 }
 
+func (cm *ConnectionManager) Hostname() string {
+    cm.mu.RLock()
+    defer cm.mu.RUnlock()
+    return cm.hostname
+}
+
 func (cm *ConnectionManager) Start() error {
 	l, err := net.Listen("tcp", cm.hostname+":"+strconv.Itoa(cm.port))
 	if err != nil {
