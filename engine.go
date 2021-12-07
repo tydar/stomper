@@ -1,8 +1,8 @@
 package main
 
 import (
+	"fmt"
 	"log"
-    "fmt"
 )
 
 type Engine struct {
@@ -32,11 +32,11 @@ func (e *Engine) Start() error {
 		if msg.Type == FRAME {
 			frame, err := ParseFrame(msg.Msg)
 			if err != nil {
-                log.Printf("ERROR: client %s and error %s\n", msg.ID, err)
-                err2 := e.handleError(msg, err)
-                if err2 != nil {
-                    log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
-                }
+				log.Printf("ERROR: client %s and error %s\n", msg.ID, err)
+				err2 := e.handleError(msg, err)
+				if err2 != nil {
+					log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
+				}
 			}
 			switch frame.Command {
 			case CONNECT:
@@ -44,26 +44,26 @@ func (e *Engine) Start() error {
 				response := e.handleConnect(msg)
 				err = e.CM.Write(msg.ID, response)
 				if err != nil {
-                    log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
+					log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
 				}
 			case SUBSCRIBE:
 				err = e.handleSubscribe(msg, frame)
-                if err != nil {
-                    log.Println(err)
-                    err2 := e.handleError(msg, err)
-                    if err2 != nil {
-                        log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
-                    }
-                }
-            case UNSUBSCRIBE:
-                err = e.handleUnsubscribe(msg, frame)
-                if err != nil {
-                    log.Println(err)
-                    err2 := e.handleError(msg, err)
-                    if err2 != nil {
-                        log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
-                    }
-                }
+				if err != nil {
+					log.Println(err)
+					err2 := e.handleError(msg, err)
+					if err2 != nil {
+						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
+					}
+				}
+			case UNSUBSCRIBE:
+				err = e.handleUnsubscribe(msg, frame)
+				if err != nil {
+					log.Println(err)
+					err2 := e.handleError(msg, err)
+					if err2 != nil {
+						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
+					}
+				}
 			}
 		}
 	}
@@ -74,7 +74,7 @@ func (e *Engine) handleConnect(msg CnxMgrMsg) string {
 	// e.handleConnect takes a CONNECT or STOMP frame and produces a CONNECTED frame
 	return UnmarshalFrame(Frame{
 		Command: CONNECTED,
-        Headers: map[string]string{"accept-version": "1.2"},
+		Headers: map[string]string{"accept-version": "1.2"},
 		Body:    "",
 	})
 }
@@ -83,11 +83,11 @@ func (e *Engine) handleSubscribe(msg CnxMgrMsg, frame Frame) error {
 	clientID := msg.ID
 	subID, prs := frame.Headers["id"]
 	if !prs {
-        return fmt.Errorf("Error: client %s: no ID on SUBSCRIBE frame", msg.ID)
+		return fmt.Errorf("Error: client %s: no ID on SUBSCRIBE frame", msg.ID)
 	}
 	dest, prs := frame.Headers["destination"]
 	if !prs {
-        return fmt.Errorf("Error: client %s: no destination on SUBSCRIBE frame", msg.ID)
+		return fmt.Errorf("Error: client %s: no destination on SUBSCRIBE frame", msg.ID)
 	}
 	// TODO: add destination validation
 	return e.SM.Subscribe(clientID, subID, dest)
@@ -98,17 +98,17 @@ func (e *Engine) handleUnsubscribe(msg CnxMgrMsg, frame Frame) error {
 	subID, prs := frame.Headers["id"]
 
 	if !prs {
-        return fmt.Errorf("Error: client %s: no ID on UNSUBSCRIBE frame", msg.ID)
+		return fmt.Errorf("Error: client %s: no ID on UNSUBSCRIBE frame", msg.ID)
 	}
 
-    return e.SM.Unsubscribe(clientID, subID)
+	return e.SM.Unsubscribe(clientID, subID)
 }
 
 func (e *Engine) handleError(msg CnxMgrMsg, err error) error {
-    eFrame := UnmarshalFrame(Frame{
-        Command: ERROR,
-        Headers: map[string]string{"message": err.Error(),},
-        Body: "Original frame: " + msg.Msg,
-    })
-    return e.CM.Write(msg.ID, eFrame)
+	eFrame := UnmarshalFrame(Frame{
+		Command: ERROR,
+		Headers: map[string]string{"message": err.Error()},
+		Body:    "Original frame: " + msg.Msg,
+	})
+	return e.CM.Write(msg.ID, eFrame)
 }

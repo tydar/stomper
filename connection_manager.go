@@ -68,7 +68,7 @@ func (cm *ConnectionManager) Start() error {
 			go cm.connections[thisUUID].Read(cm.messages, removeConnectionChan)
 			cm.mu.Unlock()
 
-            log.Printf("NEW_CONNECTION: ID %s from remote address %s\n", thisUUID, conn.RemoteAddr().String())
+			log.Printf("NEW_CONNECTION: ID %s from remote address %s\n", thisUUID, conn.RemoteAddr().String())
 
 			cm.messages <- CnxMgrMsg{
 				Type: NEW_CONNECTION,
@@ -102,7 +102,7 @@ func (cm *ConnectionManager) handleRemovals(requests chan string) {
 		delete(cm.connections, id)
 		cm.mu.Unlock()
 
-        log.Printf("CONNECTION_CLOSED by CM: ID %s\n", id)
+		log.Printf("CONNECTION_CLOSED by CM: ID %s\n", id)
 
 		cm.messages <- CnxMgrMsg{
 			Type: CONNECTION_CLOSED,

@@ -27,7 +27,7 @@ func (sm *SubscriptionManager) Subscribe(clientID string, subID string, dest str
 		Destination: dest,
 		ClientID:    clientID,
 	}
-    log.Printf("NEW_SUBSCRIPTION: Sub %s from client %s to dest %s\n", subID, clientID, dest)
+	log.Printf("NEW_SUBSCRIPTION: Sub %s from client %s to dest %s\n", subID, clientID, dest)
 	return nil
 }
 
@@ -37,7 +37,7 @@ func (sm *SubscriptionManager) Unsubscribe(clientID string, subID string) error 
 	if !prs {
 		return fmt.Errorf("No such subscription %s for client %s\n", subID, clientID)
 	}
-    log.Printf("UNSUBSCRIBE: sub %s from client %s to dest %s\n", subID, clientID, sub.Destination)
+	log.Printf("UNSUBSCRIBE: sub %s from client %s to dest %s\n", subID, clientID, sub.Destination)
 	delete(sm.Subscriptions, internalSubID)
 	return nil
 }
