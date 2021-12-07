@@ -9,13 +9,13 @@ type Engine struct {
 	CM       *ConnectionManager
 	SM       *SubscriptionManager
 	Incoming chan CnxMgrMsg
-	Store    *Store
+	Store    Store
 }
 
 func NewEngine(st Store, cm *ConnectionManager, inc chan CnxMgrMsg) *Engine {
 	return &Engine{
 		CM:       cm,
-		Store:    &st,
+		Store:    st,
 		Incoming: inc,
 		SM:       NewSubscriptionManager(),
 	}
@@ -26,6 +26,39 @@ func (e *Engine) Start() error {
 	if err != nil {
 		return err
 	}
+
+	// start send worker
+	// simple pub-sub architecture here
+    // TODO: spin this off into its own fuction
+    //       && handle additional worker goroutines configurably
+
+	go func() {
+        for {
+            dests := e.Store.Destinations()
+            for j := range dests {
+                dest := dests[j]
+                count, err := e.Store.Len(dest)
+                if err != nil {
+                    log.Printf("SEND_ERROR: No such destination\n")
+                }
+                if count > 0 {
+                    subscribers := e.SM.ClientsByDestination(dest)
+                    messageFrame, err := e.Store.Pop(dest)
+                    if err != nil {
+                        log.Println(err)
+                    } else {
+                        log.Printf("SENDING_MESSAGE: on queue %s to %d subscribers\n", dest, len(subscribers))
+                        for i := range subscribers {
+                            errWrite := e.CM.Write(subscribers[i], UnmarshalFrame(messageFrame))
+                            if errWrite != nil {
+                                log.Printf("ERROR: client %s: MESSAGE send failed\n", subscribers[i])
+                            }
+                        }
+                    }
+                }
+            }
+        }
+	}()
 
 	log.Println("Entering main loop")
 	for msg := range e.Incoming {
@@ -139,26 +172,13 @@ func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
 		return fmt.Errorf("ERROR: client %s: no destination header", msg.ID)
 	}
 
-	messageFrame := UnmarshalFrame(Frame{
+	messageFrame := Frame{
 		Command: MESSAGE,
 		Headers: newHeaders,
 		Body:    frame.Body,
-	})
+    }
 
-	// start send worker
-	// simple pub-sub architecture here
-	// TODO: limit on concurrency?
-	subscribers := e.SM.ClientsByDestination(dest)
-	log.Printf("SENDING_MESSAGE: originator ID %s to %d subscribers\n", msg.ID, len(subscribers))
-
-	go func(subscribers []string, fr string) {
-		for i := range subscribers {
-			errWrite := e.CM.Write(subscribers[i], messageFrame)
-			if errWrite != nil {
-				log.Printf("ERROR: client %s: MESSAGE send failed\n", subscribers[i])
-			}
-		}
-	}(subscribers, messageFrame)
+    e.Store.Enqueue(dest, messageFrame)
 
 	return nil
 }
