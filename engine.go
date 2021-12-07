@@ -64,19 +64,19 @@ func (e *Engine) Start() error {
 						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
 					}
 				}
-            case SEND:
-                // 2 steps
-                // synchronous: process SEND frame and create MESSAGE frame
-                // asynchronous: perform the send
-                // TODO: create a way for send logic to be decoupled
-                err = e.handleSend(msg, frame)
-                if err != nil {
-                    log.Println(err)
-                    err2 := e.handleError(msg, err)
-                    if err2 != nil {
-                        log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
-                    }
-                }
+			case SEND:
+				// 2 steps
+				// synchronous: process SEND frame and create MESSAGE frame
+				// asynchronous: perform the send
+				// TODO: create a way for send logic to be decoupled
+				err = e.handleSend(msg, frame)
+				if err != nil {
+					log.Println(err)
+					err2 := e.handleError(msg, err)
+					if err2 != nil {
+						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
+					}
+				}
 			}
 		}
 	}
@@ -85,10 +85,10 @@ func (e *Engine) Start() error {
 
 func (e *Engine) handleConnect(msg CnxMgrMsg) string {
 	// e.handleConnect takes a CONNECT or STOMP frame and produces a CONNECTED frame
-    // TODO: handle protocol negotiation ERROR generation
+	// TODO: handle protocol negotiation ERROR generation
 	return UnmarshalFrame(Frame{
 		Command: CONNECTED,
-        Headers: map[string]string{"accept-version": "1.2", "host": e.CM.Hostname(),},
+		Headers: map[string]string{"accept-version": "1.2", "host": e.CM.Hostname()},
 		Body:    "",
 	})
 }
@@ -128,38 +128,37 @@ func (e *Engine) handleError(msg CnxMgrMsg, err error) error {
 }
 
 func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
-    // TODO: destination validation
-    newHeaders := make(map[string]string)
-    for k,v := range frame.Headers {
-        newHeaders[k] = v
-    }
+	// TODO: destination validation
+	newHeaders := make(map[string]string)
+	for k, v := range frame.Headers {
+		newHeaders[k] = v
+	}
 
-    dest, prs := frame.Headers["destination"]
-    if !prs {
-        return fmt.Errorf("ERROR: client %s: no destination header", msg.ID)
-    }
+	dest, prs := frame.Headers["destination"]
+	if !prs {
+		return fmt.Errorf("ERROR: client %s: no destination header", msg.ID)
+	}
 
-    messageFrame := UnmarshalFrame(Frame{
-        Command: MESSAGE,
-        Headers: newHeaders,
-        Body: frame.Body,
-    })
+	messageFrame := UnmarshalFrame(Frame{
+		Command: MESSAGE,
+		Headers: newHeaders,
+		Body:    frame.Body,
+	})
 
+	// start send worker
+	// simple pub-sub architecture here
+	// TODO: limit on concurrency?
+	subscribers := e.SM.ClientsByDestination(dest)
+	log.Printf("SENDING_MESSAGE: originator ID %s to %d subscribers\n", msg.ID, len(subscribers))
 
-    // start send worker
-    // simple pub-sub architecture here
-    // TODO: limit on concurrency?
-    subscribers := e.SM.ClientsByDestination(dest)
-    log.Printf("SENDING_MESSAGE: originator ID %s to %d subscribers\n", msg.ID, len(subscribers))
-    
-    go func(subscribers []string, fr string) {
-        for i := range subscribers {
-            errWrite := e.CM.Write(subscribers[i], messageFrame)
-            if errWrite != nil {
-                log.Printf("ERROR: client %s: MESSAGE send failed\n", subscribers[i])
-            }
-        }
-    }(subscribers, messageFrame)
+	go func(subscribers []string, fr string) {
+		for i := range subscribers {
+			errWrite := e.CM.Write(subscribers[i], messageFrame)
+			if errWrite != nil {
+				log.Printf("ERROR: client %s: MESSAGE send failed\n", subscribers[i])
+			}
+		}
+	}(subscribers, messageFrame)
 
-    return nil
+	return nil
 }

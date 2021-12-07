@@ -40,9 +40,9 @@ func NewConnectionManager(hostname string, port int, messages chan CnxMgrMsg) *C
 }
 
 func (cm *ConnectionManager) Hostname() string {
-    cm.mu.RLock()
-    defer cm.mu.RUnlock()
-    return cm.hostname
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
+	return cm.hostname
 }
 
 func (cm *ConnectionManager) Start() error {
