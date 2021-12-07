@@ -64,6 +64,19 @@ func (e *Engine) Start() error {
 						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
 					}
 				}
+            case SEND:
+                // 2 steps
+                // synchronous: process SEND frame and create MESSAGE frame
+                // asynchronous: perform the send
+                // TODO: create a way for send logic to be decoupled
+                err = e.handleSend(msg, frame)
+                if err != nil {
+                    log.Println(err)
+                    err2 := e.handleError(msg, err)
+                    if err2 != nil {
+                        log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
+                    }
+                }
 			}
 		}
 	}
@@ -111,4 +124,40 @@ func (e *Engine) handleError(msg CnxMgrMsg, err error) error {
 		Body:    "Original frame: " + msg.Msg,
 	})
 	return e.CM.Write(msg.ID, eFrame)
+}
+
+func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
+    newHeaders := make(map[string]string)
+    for k,v := range frame.Headers {
+        newHeaders[k] = v
+    }
+
+    dest, prs := frame.Headers["destination"]
+    if !prs {
+        return fmt.Errorf("ERROR: client %s: no destination header", msg.ID)
+    }
+
+    messageFrame := UnmarshalFrame(Frame{
+        Command: MESSAGE,
+        Headers: newHeaders,
+        Body: frame.Body,
+    })
+
+
+    // start send worker
+    // simple pub-sub architecture here
+    // TODO: limit on concurrency?
+    subscribers := e.SM.ClientsByDestination(dest)
+    log.Printf("SENDING_MESSAGE: originator ID %s to %d subscribers\n", msg.ID, len(subscribers))
+    
+    go func(subscribers []string, fr string) {
+        for i := range subscribers {
+            errWrite := e.CM.Write(subscribers[i], messageFrame)
+            if errWrite != nil {
+                log.Printf("ERROR: client %s: MESSAGE send failed\n", subscribers[i])
+            }
+        }
+    }(subscribers, messageFrame)
+
+    return nil
 }
