@@ -29,35 +29,46 @@ func (e *Engine) Start() error {
 
 	// start send worker
 	// simple pub-sub architecture here
-    // TODO: spin this off into its own fuction
-    //       && handle additional worker goroutines configurably
+	// TODO: spin this off into its own fuction
+	//       && handle additional worker goroutines configurably
 
 	go func() {
-        for {
-            dests := e.Store.Destinations()
-            for j := range dests {
-                dest := dests[j]
-                count, err := e.Store.Len(dest)
-                if err != nil {
-                    log.Printf("SEND_ERROR: No such destination\n")
-                }
-                if count > 0 {
-                    subscribers := e.SM.ClientsByDestination(dest)
-                    messageFrame, err := e.Store.Pop(dest)
-                    if err != nil {
-                        log.Println(err)
-                    } else {
-                        log.Printf("SENDING_MESSAGE: on queue %s to %d subscribers\n", dest, len(subscribers))
-                        for i := range subscribers {
-                            errWrite := e.CM.Write(subscribers[i], UnmarshalFrame(messageFrame))
-                            if errWrite != nil {
-                                log.Printf("ERROR: client %s: MESSAGE send failed\n", subscribers[i])
-                            }
-                        }
-                    }
-                }
-            }
-        }
+		for {
+			dests := e.Store.Destinations()
+			for j := range dests {
+				dest := dests[j]
+				count, err := e.Store.Len(dest)
+				if err != nil {
+					log.Printf("SEND_ERROR: No such destination\n")
+				}
+				if count > 0 {
+					subscribers := e.SM.ClientsByDestination(dest)
+					messageFrame, err := e.Store.Pop(dest)
+					if err != nil {
+						log.Println(err)
+					} else {
+						log.Printf("SENDING_MESSAGE: on queue %s to %d subscribers\n", dest, len(subscribers))
+						for i := range subscribers {
+							sub := subscribers[i]
+							uniqueHeaders := make(map[string]string)
+							for k, v := range messageFrame.Headers {
+								uniqueHeaders[k] = v
+							}
+							uniqueFrame := Frame{
+								Command: messageFrame.Command,
+								Headers: uniqueHeaders,
+								Body:    messageFrame.Body,
+							}
+							uniqueFrame.Headers["subscription"] = sub.ID
+							errWrite := e.CM.Write(sub.ClientID, UnmarshalFrame(messageFrame))
+							if errWrite != nil {
+								log.Printf("ERROR: client %s: MESSAGE send failed\n", subscribers[i])
+							}
+						}
+					}
+				}
+			}
+		}
 	}()
 
 	log.Println("Entering main loop")
@@ -162,6 +173,7 @@ func (e *Engine) handleError(msg CnxMgrMsg, err error) error {
 
 func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
 	// TODO: destination validation
+	// TODO: message ID creation
 	newHeaders := make(map[string]string)
 	for k, v := range frame.Headers {
 		newHeaders[k] = v
@@ -176,9 +188,9 @@ func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
 		Command: MESSAGE,
 		Headers: newHeaders,
 		Body:    frame.Body,
-    }
+	}
 
-    e.Store.Enqueue(dest, messageFrame)
+	e.Store.Enqueue(dest, messageFrame)
 
 	return nil
 }

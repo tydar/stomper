@@ -52,7 +52,7 @@ func (sm *SubscriptionManager) Get(clientID string, subID string) (Subscription,
 	}
 }
 
-func (sm *SubscriptionManager) ClientsByDestination(dest string) []string {
+func (sm *SubscriptionManager) ClientsByDestination(dest string) []Subscription {
 	// loop for now
 	// could see this being expensive
 	// might be better to just maintain a map keyed by internal ID
@@ -60,11 +60,11 @@ func (sm *SubscriptionManager) ClientsByDestination(dest string) []string {
 	// so lookup is O(1) or O(nlogn) or something like that
 	// adding is worst-case O(n), and removing is O(1)
 
-	clients := make([]string, 0)
+	clients := make([]Subscription, 0)
 	for k := range sm.Subscriptions {
 		sub := sm.Subscriptions[k]
 		if sub.Destination == dest {
-			clients = append(clients, sub.ClientID)
+			clients = append(clients, sub)
 		}
 	}
 	return clients
