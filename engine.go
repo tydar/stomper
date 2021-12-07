@@ -85,6 +85,7 @@ func (e *Engine) Start() error {
 
 func (e *Engine) handleConnect(msg CnxMgrMsg) string {
 	// e.handleConnect takes a CONNECT or STOMP frame and produces a CONNECTED frame
+    // TODO: handle protocol negotiation ERROR generation
 	return UnmarshalFrame(Frame{
 		Command: CONNECTED,
         Headers: map[string]string{"accept-version": "1.2", "host": e.CM.Hostname(),},
@@ -127,6 +128,7 @@ func (e *Engine) handleError(msg CnxMgrMsg, err error) error {
 }
 
 func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
+    // TODO: destination validation
     newHeaders := make(map[string]string)
     for k,v := range frame.Headers {
         newHeaders[k] = v
