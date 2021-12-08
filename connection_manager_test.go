@@ -13,7 +13,7 @@ import (
 
 func TestConnectionManager(t *testing.T) {
 	messages := make(chan CnxMgrMsg)
-	cm := NewConnectionManager("", 2000, messages)
+	cm := NewConnectionManager("", 2000, messages, 5)
 	err := cm.Start()
 	if err != nil {
 		t.Error("error starting cnx manager", err)

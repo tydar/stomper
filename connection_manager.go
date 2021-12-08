@@ -9,6 +9,7 @@ import (
 	"net"
 	"strconv"
 	"sync"
+    "time"
 
 	"github.com/google/uuid"
 )
@@ -26,16 +27,18 @@ type ConnectionManager struct {
 	port        int
 	connections map[string]*Connection
 	messages    chan CnxMgrMsg
+    timeout     time.Duration
 	mu          sync.RWMutex
 }
 
-func NewConnectionManager(hostname string, port int, messages chan CnxMgrMsg) *ConnectionManager {
+func NewConnectionManager(hostname string, port int, messages chan CnxMgrMsg, timeout time.Duration) *ConnectionManager {
 	return &ConnectionManager{
 		listener:    nil,
 		hostname:    hostname,
 		port:        port,
 		connections: make(map[string]*Connection),
 		messages:    messages,
+        timeout:     timeout * time.Second,
 	}
 }
 
@@ -71,7 +74,7 @@ func (cm *ConnectionManager) Start() error {
 			thisUUID := uuid.NewString()
 			cm.mu.Lock()
 			cm.connections[thisUUID] = NewConnection(conn, thisUUID)
-			go cm.connections[thisUUID].Read(cm.messages, removeConnectionChan)
+			go cm.connections[thisUUID].Read(cm.messages, removeConnectionChan, cm.timeout)
 			cm.mu.Unlock()
 
 			log.Printf("NEW_CONNECTION: ID %s from remote address %s\n", thisUUID, conn.RemoteAddr().String())
@@ -131,9 +134,10 @@ func NewConnection(conn net.Conn, id string) *Connection {
 	}
 }
 
-func (c *Connection) Read(readTo chan CnxMgrMsg, done chan string) {
+func (c *Connection) Read(readTo chan CnxMgrMsg, done chan string, timeout time.Duration) {
 	scanner := bufio.NewScanner(c.conn)
 	scanner.Split(ScanNullTerm)
+    c.conn.SetReadDeadline(time.Now().Add(timeout))
 	for {
 		if ok := scanner.Scan(); !ok {
 			break

@@ -4,7 +4,7 @@ import "log"
 
 func main() {
 	comms := make(chan CnxMgrMsg)
-	cm := NewConnectionManager("", 2000, comms)
+	cm := NewConnectionManager("", 2000, comms, 10)
 	st := &MemoryStore{
 		Queues: map[string][]Frame{"/queue/test": make([]Frame, 0)},
 	}
