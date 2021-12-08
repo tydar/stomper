@@ -9,7 +9,7 @@ import (
 	"net"
 	"strconv"
 	"sync"
-    "time"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -27,7 +27,7 @@ type ConnectionManager struct {
 	port        int
 	connections map[string]*Connection
 	messages    chan CnxMgrMsg
-    timeout     time.Duration
+	timeout     time.Duration
 	mu          sync.RWMutex
 }
 
@@ -38,7 +38,7 @@ func NewConnectionManager(hostname string, port int, messages chan CnxMgrMsg, ti
 		port:        port,
 		connections: make(map[string]*Connection),
 		messages:    messages,
-        timeout:     timeout * time.Second,
+		timeout:     timeout * time.Second,
 	}
 }
 
@@ -137,7 +137,7 @@ func NewConnection(conn net.Conn, id string) *Connection {
 func (c *Connection) Read(readTo chan CnxMgrMsg, done chan string, timeout time.Duration) {
 	scanner := bufio.NewScanner(c.conn)
 	scanner.Split(ScanNullTerm)
-    c.conn.SetReadDeadline(time.Now().Add(timeout))
+	c.conn.SetReadDeadline(time.Now().Add(timeout))
 	for {
 		if ok := scanner.Scan(); !ok {
 			break

@@ -90,7 +90,7 @@ func (e *Engine) Start() error {
 				err = e.CM.Write(msg.ID, response)
 				if err != nil {
 					log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
-                }
+				}
 			case SUBSCRIBE:
 				err = e.handleSubscribe(msg, frame)
 				if err != nil {
@@ -99,12 +99,12 @@ func (e *Engine) Start() error {
 					if err2 != nil {
 						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
 					}
-                } else {
-                    err = e.handleReceipt(msg, frame)
-                    if err != nil {
-                        log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
-                    }
-                }
+				} else {
+					err = e.handleReceipt(msg, frame)
+					if err != nil {
+						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
+					}
+				}
 			case UNSUBSCRIBE:
 				err = e.handleUnsubscribe(msg, frame)
 				if err != nil {
@@ -113,12 +113,12 @@ func (e *Engine) Start() error {
 					if err2 != nil {
 						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
 					}
-                } else {
-                    err = e.handleReceipt(msg, frame)
-                    if err != nil {
-                        log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
-                    }
-                }
+				} else {
+					err = e.handleReceipt(msg, frame)
+					if err != nil {
+						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
+					}
+				}
 			case SEND:
 				err = e.handleSend(msg, frame)
 				if err != nil {
@@ -127,13 +127,13 @@ func (e *Engine) Start() error {
 					if err2 != nil {
 						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
 					}
-                } else {
-                    err = e.handleReceipt(msg, frame)
-                    if err != nil {
-                        log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
-                    }
-                }
-            case DISCONNECT:
+				} else {
+					err = e.handleReceipt(msg, frame)
+					if err != nil {
+						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
+					}
+				}
+			case DISCONNECT:
 			}
 		}
 	}
@@ -185,17 +185,17 @@ func (e *Engine) handleError(msg CnxMgrMsg, err error) error {
 }
 
 func (e *Engine) handleReceipt(msg CnxMgrMsg, frame Frame) error {
-    receiptID, prs := frame.Headers["receipt"]
-    if prs {
-        rFrame := UnmarshalFrame(Frame {
-            Command: RECEIPT,
-            Headers: map[string]string{"receipt-id": receiptID},
-            Body: "",
-        })
-        return e.CM.Write(msg.ID, rFrame)
-    } else {
-        return nil
-    }
+	receiptID, prs := frame.Headers["receipt"]
+	if prs {
+		rFrame := UnmarshalFrame(Frame{
+			Command: RECEIPT,
+			Headers: map[string]string{"receipt-id": receiptID},
+			Body:    "",
+		})
+		return e.CM.Write(msg.ID, rFrame)
+	} else {
+		return nil
+	}
 }
 
 func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
