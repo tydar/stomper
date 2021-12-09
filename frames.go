@@ -90,7 +90,7 @@ func ParseFrame(text string) (Frame, error) {
 		// now that we know we have a long enough frame body
 		// we can slice it at content-length
 		// and check that it was null terminated / not too long
-        rest := []byte(possibleBody[contentLength:])
+		rest := []byte(possibleBody[contentLength:])
 		if len(rest) == 0 || rest[0] != '\000' {
 			return Frame{}, errors.New("termination error")
 		}

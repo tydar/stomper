@@ -1,3 +1,6 @@
 port: 2000
 hostname: ""
 tcpdeadline: 30
+topics:
+    - /queue/main
+    - /queue/second
