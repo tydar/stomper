@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/spf13/viper"
 )
@@ -11,6 +12,7 @@ func main() {
 	viper.SetDefault("Port", 2000)
 	viper.SetDefault("Hostname", "localhost")
 	viper.SetDefault("TCPDeadline", 10)
+	viper.SetDefault("LogPath", "./stomper.log")
 
 	// for now, we'll set one default queue to be /queue/main
 	// and topics will be created as a string array from the config file
@@ -27,6 +29,16 @@ func main() {
 			log.Println("CONFIG: No stomper_config.yaml file found in invocation dir or /etc/stomper/, using defaults.")
 		} else {
 			log.Fatal(fmt.Errorf("fatal error config file: %w", err))
+		}
+	}
+
+	lfPath := viper.GetString("LogPath")
+	if lfPath != "STDOUT" {
+		lf, err := os.OpenFile(lfPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Printf("CONFIG: Error opening file %s, logging to STDOUT\n", lfPath)
+		} else {
+			log.SetOutput(lf)
 		}
 	}
 
