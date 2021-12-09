@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	viper.SetDefault("Port", 2000)
+	viper.SetDefault("Port", 32801)
 	viper.SetDefault("Hostname", "localhost")
 	viper.SetDefault("TCPDeadline", 10)
 	viper.SetDefault("LogPath", "./stomper.log")
