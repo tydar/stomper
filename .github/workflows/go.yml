@@ -1,4 +1,4 @@
-name: go test
+name: test & publish to ghcr
 
 on:
   push:
@@ -6,8 +6,11 @@ on:
   pull_request:
     branches: [ main ]
 
-jobs:
+env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository }}
 
+jobs:
   test:
     runs-on: ubuntu-latest
     steps:
@@ -20,3 +23,31 @@ jobs:
         
     - name: Test
       run: go test -v ./...
+
+  docker:
+      needs: test
+      runs-on: ubuntu-latest
+      steps:
+          - name: Checkout repo
+            uses: actions/checkout@v2
+
+          - name: Log in to the container registry
+            uses: docker/login-action@v1
+            with:
+                registry: ${{ env.REGISTRY }}
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
+
+          - name: Extract metadata for Docker
+            id: meta
+            uses: docker/metadata-action@v3
+            with:
+                images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+          - name: Build and push Docker image
+            uses: docker/build-push-action@v2
+            with:
+                context: .
+                push: true
+                tags: ${{ steps.meta.outputs.tags }}
+                labesl: ${{ steps.meta.outputs.labels }}
