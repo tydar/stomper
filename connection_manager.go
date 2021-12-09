@@ -31,6 +31,7 @@ type ConnectionManager struct {
 }
 
 func NewConnectionManager(hostname string, port int, messages chan CnxMgrMsg, timeout time.Duration) *ConnectionManager {
+    log.Printf("NEW_CONNECTION_MANAGER on %s:%d with timeout %d seconds\n", hostname, port, timeout)
 	return &ConnectionManager{
 		listener:    nil,
 		hostname:    hostname,
