@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -13,6 +14,8 @@ func main() {
 	viper.SetDefault("Hostname", "localhost")
 	viper.SetDefault("TCPDeadline", 10)
 	viper.SetDefault("LogPath", "./stomper.log")
+	viper.SetDefault("LogToFile", true)
+	viper.SetDefault("LogToStdout", false)
 
 	// for now, we'll set one default queue to be /queue/main
 	// and topics will be created as a string array from the config file
@@ -32,13 +35,23 @@ func main() {
 		}
 	}
 
+	// even if LogToStdout is false, if we have no log file we'll default to logging to STDOUT for now
 	lfPath := viper.GetString("LogPath")
-	if lfPath != "STDOUT" {
+	logToFile := viper.GetBool("LogToFile")
+	logToStdout := viper.GetBool("LogToStdout")
+	if logToFile {
 		lf, err := os.OpenFile(lfPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			log.Printf("CONFIG: Error opening file %s, logging to STDOUT\n", lfPath)
 		} else {
-			log.SetOutput(lf)
+			if logToStdout {
+				// if LogToStdout key set and we've got a valid log file loc
+				// we need a multiwriter to log to both
+				log.SetOutput(io.MultiWriter(lf, os.Stdout))
+			} else {
+				//otherwise, just log to the file
+				log.SetOutput(lf)
+			}
 		}
 	}
 

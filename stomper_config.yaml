@@ -1,6 +1,7 @@
 port: 32801
 hostname: ""
 tcpdeadline: 30
+logtostdout: true
 topics:
     - /queue/main
     - /queue/second
