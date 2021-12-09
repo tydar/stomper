@@ -154,11 +154,11 @@ func (e *Engine) handleSubscribe(msg CnxMgrMsg, frame Frame) error {
 	clientID := msg.ID
 	subID, prs := frame.Headers["id"]
 	if !prs {
-		return fmt.Errorf("Error: client %s: no ID on SUBSCRIBE frame", msg.ID)
+		return fmt.Errorf("error: client %s: no ID on SUBSCRIBE frame", msg.ID)
 	}
 	dest, prs := frame.Headers["destination"]
 	if !prs {
-		return fmt.Errorf("Error: client %s: no destination on SUBSCRIBE frame", msg.ID)
+		return fmt.Errorf("error: client %s: no destination on SUBSCRIBE frame", msg.ID)
 	}
 	// TODO: add destination validation
 	return e.SM.Subscribe(clientID, subID, dest)
@@ -169,7 +169,7 @@ func (e *Engine) handleUnsubscribe(msg CnxMgrMsg, frame Frame) error {
 	subID, prs := frame.Headers["id"]
 
 	if !prs {
-		return fmt.Errorf("Error: client %s: no ID on UNSUBSCRIBE frame", msg.ID)
+		return fmt.Errorf("error: client %s: no ID on UNSUBSCRIBE frame", msg.ID)
 	}
 
 	return e.SM.Unsubscribe(clientID, subID)
@@ -208,7 +208,7 @@ func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
 
 	dest, prs := frame.Headers["destination"]
 	if !prs {
-		return fmt.Errorf("ERROR: client %s: no destination header", msg.ID)
+		return fmt.Errorf("error: client %s: no destination header", msg.ID)
 	}
 
 	messageFrame := Frame{

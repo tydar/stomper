@@ -23,7 +23,7 @@ func TestParseFrames(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		testname := fmt.Sprintf("%s", tt.raw)
+		testname := tt.raw
 		t.Run(testname, func(t *testing.T) {
 			parsed, err := ParseFrame(tt.raw)
 			if (err != nil) && !tt.err {

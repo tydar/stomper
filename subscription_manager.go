@@ -19,7 +19,7 @@ func (sm *SubscriptionManager) Subscribe(clientID string, subID string, dest str
 	internalSubID := clientID + "_" + subID
 	_, prs := sm.Subscriptions[internalSubID]
 	if prs {
-		return fmt.Errorf("Subscription from client %s with sub ID %s already exists\n", clientID, subID)
+		return fmt.Errorf("subscription from client %s with sub ID %s already exists", clientID, subID)
 	}
 
 	sm.Subscriptions[internalSubID] = Subscription{
@@ -35,7 +35,7 @@ func (sm *SubscriptionManager) Unsubscribe(clientID string, subID string) error 
 	internalSubID := clientID + "_" + subID
 	sub, prs := sm.Subscriptions[internalSubID]
 	if !prs {
-		return fmt.Errorf("No such subscription %s for client %s\n", subID, clientID)
+		return fmt.Errorf("no such subscription %s for client %s", subID, clientID)
 	}
 	log.Printf("UNSUBSCRIBE: sub %s from client %s to dest %s\n", subID, clientID, sub.Destination)
 	delete(sm.Subscriptions, internalSubID)
@@ -48,7 +48,7 @@ func (sm *SubscriptionManager) Get(clientID string, subID string) (Subscription,
 	if prs {
 		return sub, nil
 	} else {
-		return Subscription{}, fmt.Errorf("No sub ID %s for client %s exists", subID, clientID)
+		return Subscription{}, fmt.Errorf("no sub ID %s for client %s exists", subID, clientID)
 	}
 }
 

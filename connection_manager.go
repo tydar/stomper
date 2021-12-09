@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -99,7 +98,7 @@ func (cm *ConnectionManager) Write(id string, msg string) error {
 	cm.mu.RUnlock()
 
 	if !prs {
-		return errors.New(fmt.Sprintf("Connection %v no longer open.\n", id))
+		return fmt.Errorf("Connection %v no longer open", id)
 	}
 
 	return connection.Write(msg)

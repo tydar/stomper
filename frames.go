@@ -34,14 +34,14 @@ type Frame struct {
 func ParseFrame(text string) (Frame, error) {
 	tokens := strings.Split(text, "\n")
 	if len(tokens) < 3 {
-		return Frame{}, errors.New("Invalid frame, too few newlines per STOMP specification.")
+		return Frame{}, errors.New("invalid frame, too few newlines per STOMP specification")
 	}
 
 	// first line should be the command
 	command := tokens[0]
 
 	if !validateCommand(command) {
-		return Frame{}, errors.New("Invalid command.")
+		return Frame{}, errors.New("invalid command")
 	}
 
 	// an arbitrary number of lines will be headers
@@ -85,15 +85,14 @@ func ParseFrame(text string) (Frame, error) {
 		// so we check against len(possibleBody) - 1 to count out a potential null byte
 		// required for termination
 		if (len(possibleBody) - 1) < contentLength {
-			return Frame{}, errors.New("Incomplete frame.")
+			return Frame{}, errors.New("incomplete frame")
 		}
 		// now that we know we have a long enough frame body
 		// we can slice it at content-length
 		// and check that it was null terminated / not too long
-		var rest []byte
-		rest = []byte(possibleBody[contentLength:])
+        rest := []byte(possibleBody[contentLength:])
 		if len(rest) == 0 || rest[0] != '\000' {
-			return Frame{}, errors.New("Termination error.")
+			return Frame{}, errors.New("termination error")
 		}
 		possibleBody = possibleBody[:contentLength]
 	} else {
@@ -102,7 +101,7 @@ func ParseFrame(text string) (Frame, error) {
 		byteBody := []byte(possibleBody)
 		terminatorIndex := bytes.IndexRune(byteBody, '\000')
 		if terminatorIndex < 0 {
-			return Frame{}, errors.New("Termination error.")
+			return Frame{}, errors.New("termination error")
 		} else {
 			// and if there was, slice the body at the first null byte
 			possibleBody = possibleBody[:terminatorIndex]
@@ -130,7 +129,7 @@ func parseHeader(header string) (string, string, error) {
 	// parse one header line into a key and a vlue
 	tokens := strings.SplitN(header, ":", 2) // only want to split on the first :
 	if len(tokens) != 2 {
-		return "", "", errors.New("Malformed header.")
+		return "", "", errors.New("malformed header")
 	}
 	return tokens[0], tokens[1], nil
 }

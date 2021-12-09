@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"net"
 	"reflect"
@@ -97,7 +96,7 @@ func TestScanNullTerm(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		testname := fmt.Sprintf("%s", string(tt.input))
+		testname := string(tt.input)
 		t.Run(testname, func(t *testing.T) {
 			advance, token, err := ScanNullTerm(tt.input, tt.eof)
 			if err != tt.err {
@@ -123,7 +122,7 @@ func TestScannerNullTerm(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		testname := fmt.Sprintf("%s", string(tt.input))
+		testname := string(tt.input)
 		t.Run(testname, func(t *testing.T) {
 			scanner := bufio.NewScanner(strings.NewReader(tt.input))
 			scanner.Split(ScanNullTerm)

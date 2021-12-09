@@ -29,7 +29,7 @@ func (m *MemoryStore) Enqueue(destination string, message Frame) error {
 		m.Queues[destination] = append(q, message)
 		return nil
 	} else {
-		return errors.New("No such destination.")
+		return errors.New("no such destination")
 	}
 }
 
@@ -38,7 +38,7 @@ func (m *MemoryStore) Pop(destination string) (Frame, error) {
 	m.Lock()
 	defer m.Unlock()
 	if l == 0 {
-		return Frame{}, errors.New("Destination queue empty.")
+		return Frame{}, errors.New("destination queue empty")
 	}
 
 	if err != nil {
@@ -56,7 +56,7 @@ func (m *MemoryStore) Len(destination string) (int, error) {
 	defer m.Unlock()
 	q, prs := m.Queues[destination]
 	if !prs {
-		return -1, errors.New("No such destination.")
+		return -1, errors.New("no such destination")
 	}
 
 	return len(q), nil
