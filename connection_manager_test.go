@@ -12,14 +12,14 @@ import (
 
 func TestConnectionManager(t *testing.T) {
 	messages := make(chan CnxMgrMsg)
-	cm := NewConnectionManager("", 2000, messages, 5)
+	cm := NewConnectionManager("", 32801, messages, 5)
 	err := cm.Start()
 	if err != nil {
 		t.Error("error starting cnx manager", err)
 	}
 
 	t.Run("_ConnectAndRead", func(t *testing.T) {
-		conn, err := net.Dial("tcp", ":2000")
+		conn, err := net.Dial("tcp", ":32801")
 		if err != nil {
 			t.Error("could not connect to server: ", err)
 		}
@@ -33,7 +33,7 @@ func TestConnectionManager(t *testing.T) {
 	})
 
 	t.Run("_Write", func(t *testing.T) {
-		conn, err := net.Dial("tcp", ":2000")
+		conn, err := net.Dial("tcp", ":32801")
 		if err != nil {
 			t.Error("could not connect to server: ", err)
 		}
@@ -63,7 +63,7 @@ func TestConnectionManager(t *testing.T) {
 	})
 
 	t.Run("_handleRemovals", func(t *testing.T) {
-		conn, err := net.Dial("tcp", ":2000")
+		conn, err := net.Dial("tcp", ":32801")
 		if err != nil {
 			t.Error("could not connect to server: ", err)
 		}
