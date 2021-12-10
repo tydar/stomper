@@ -26,6 +26,9 @@ func main() {
 	viper.AddConfigPath("/etc/stomper/")
 	viper.AddConfigPath(".")
 
+	viper.SetEnvPrefix("stomper")
+	viper.AutomaticEnv()
+
 	err := viper.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
