@@ -4,7 +4,7 @@
 
 A Go message queue implementing the [STOMP protocol](https://stomp.github.io/stomp-specification-1.2.html).
 
-## Install and test latest build from main
+## Install and test latest build from GHCR
 
 1. Pull from Docker:
 
@@ -19,6 +19,14 @@ $ docker run -d -p 32801:32801 ghcr.io/tydar/stomper:main
 ```
 
 3. Connect with a STOMP client at port 32801 and test!
+
+To overwrite Stomper's default settings, you can pass environment variables to the container:
+
+```shell
+$ docker run -d -p 32801:32801 --env STOMPER_TOPICS="/queue/env1 /queue/env2" ghcr.io/tydar/stomper:main
+```
+
+## Configuration options
 
 ## Done
 
