@@ -12,7 +12,7 @@ import (
 func main() {
 	viper.SetDefault("Port", 32801)
 	viper.SetDefault("Hostname", "localhost")
-	viper.SetDefault("TCPDeadline", 10)
+	viper.SetDefault("TCPDeadline", 30)
 	viper.SetDefault("LogPath", "./stomper.log")
 	viper.SetDefault("LogToFile", true)
 	viper.SetDefault("LogToStdout", false)

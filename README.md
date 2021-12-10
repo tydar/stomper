@@ -28,6 +28,18 @@ $ docker run -d -p 32801:32801 --env STOMPER_TOPICS="/queue/env1 /queue/env2" gh
 
 ## Configuration options
 
+| Parameter | ENV variable | Default Value | Description |
+| --------- | ------------ | ------------- | ----------- |
+| Port      | STOMPER_PORT | 32801         | TCP port server listens on |
+| Hostname  | STOMPER_HOSTNAME | localhost | hostname on which server accepts connections |
+| TCPDeadline | STOMPER_TCPDEADLINE | 30 | TCP timeout (time between messages from client) |
+| LogPath   | STOMPER_LOGPATH | ./stomper.log | path to log file |
+| LogToFile | STOMPER_LOGTOFILE | true     | should we stomper log to a file? |
+| LogToStdout| STOMPER_LOGTOSTDOUT| false   | should stomper log to stdout? |
+| Topics    | STOMPER_TOPICS    | ["/queue/main"] | list of pub-sub topics |
+
+An example config file is provided: `stomper_config.yaml`. Stomper will look for a file with this name in either `/etc/stomper` or the directory from which it is called.
+
 ## Done
 
 * Frame parsing
