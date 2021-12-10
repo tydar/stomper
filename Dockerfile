@@ -21,7 +21,6 @@ FROM gcr.io/distroless/base-debian10
 WORKDIR /app
 
 COPY --from=build /stomper /app/stomper
-COPY stomper_config.yaml /etc/stomper/stomper_config.yaml
 
 EXPOSE 32801
 
