@@ -137,7 +137,6 @@ func NewConnection(conn net.Conn, id string) *Connection {
 func (c *Connection) Read(readTo chan CnxMgrMsg, done chan string, timeout time.Duration) {
 	scanner := bufio.NewScanner(c.conn)
 	scanner.Split(ScanNullTerm)
-	c.conn.SetReadDeadline(time.Now().Add(timeout))
 	for {
 		if ok := scanner.Scan(); !ok {
 			break
@@ -147,6 +146,8 @@ func (c *Connection) Read(readTo chan CnxMgrMsg, done chan string, timeout time.
 			ID:   c.id,
 			Msg:  (scanner.Text() + "\000"), // have to append the null byte that the scanner strips
 		}
+		log.Printf("Setting Read Deadline for conn %s\n", c.id)
+		c.conn.SetReadDeadline(time.Now().Add(timeout))
 	}
 	done <- c.id
 }
