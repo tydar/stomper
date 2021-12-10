@@ -15,10 +15,10 @@ $ docker pull ghcr.io/tydar/stomper:main
 2. Run and expose the port from the example config:
 
 ```shell
-$ docker run -d -p 2000:2000 stomper:main
+$ docker run -d -p 32801:32801 ghcr.io/tydar/stomper:main
 ```
 
-3. Connect with a STOMP client at port 2000 and test!
+3. Connect with a STOMP client at port 32801 and test!
 
 ## Done
 

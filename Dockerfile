@@ -23,6 +23,6 @@ WORKDIR /app
 COPY --from=build /stomper /app/stomper
 COPY stomper_config.yaml /etc/stomper/stomper_config.yaml
 
-EXPOSE 2000
+EXPOSE 32801
 
 ENTRYPOINT [ "/app/stomper" ]
