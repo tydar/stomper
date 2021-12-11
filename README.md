@@ -4,6 +4,10 @@
 
 A Go message queue implementing the [STOMP protocol](https://stomp.github.io/stomp-specification-1.2.html).
 
+## Examples
+
+Currently one simple point-to-point messaging example is included at `examples/PointToPoint`. Clone the repo, navigate to that folder, and run `docker-compose up` to see it in action.
+
 ## Install and test latest build from GHCR
 
 1. Pull from Docker:
@@ -32,7 +36,7 @@ $ docker run -d -p 32801:32801 --env STOMPER_TOPICS="/queue/env1 /queue/env2" gh
 | --------- | ------------ | ------------- | ----------- |
 | Port      | STOMPER_PORT | 32801         | TCP port server listens on |
 | Hostname  | STOMPER_HOSTNAME | localhost | hostname on which server accepts connections |
-| TCPDeadline | STOMPER_TCPDEADLINE | 30 | TCP timeout (time between messages from client) |
+| TCPDeadline | STOMPER_TCPDEADLINE | 30 | TCP timeout (time in seconds allowed between msg from client, 0 means no timeout) |
 | LogPath   | STOMPER_LOGPATH | ./stomper.log | path to log file |
 | LogToFile | STOMPER_LOGTOFILE | true     | should we stomper log to a file? |
 | LogToStdout| STOMPER_LOGTOSTDOUT| false   | should stomper log to stdout? |
@@ -45,32 +49,30 @@ An example config file is provided: `stomper_config.yaml`. Stomper will look for
 * Frame parsing
 * Define interface for queueing
 * Implement memory queue backend
+* Frame handling
+  * CONNECT
+  * SUBSCRIBE
+  * UNSUBSCRIBE
+  * SEND
+  * MESSAGE
+  * RECEIPT
+  * ERROR
+* Semantics
+  * Supports only pub-sub currently
 
 ## TODO
 
 * Server connection protocol
-    * Manage connections
-    * TTL protocol
     * Size limits?
     * Auth?
         * crypto/tls
 * Define semantics beyond STOMP protocol
 * Implement frame actions
-    * SEND
-    * SUBSCRIBE
-    * UNSUBSCRIBE
     * BEGIN
     * COMMIT
     * ABORT
     * ACK
     * NACK
     * DISCONNECT
-    * MESSAGE
-    * RECEIPT
-    * ERROR
-* Define server initialization
-    * When are topics defined?
-    * What needs to be configured to enable connections?
-* Rewrite parsing information. Does not conform to this direction from the standard:
-    * If a content-length header is included, this number of octets MUST be read, regardless of whether or not there are NULL octets in the body.
-    * This is because the scanner used by ConnectionManager to tokenize input into frames will stop reading at the first null octet.
+* Message queueing (depends on ACK, NACK)
+* Configuration of worker pool for message forwarding
