@@ -149,11 +149,7 @@ func (c *Connection) Read(readTo chan CnxMgrMsg, done chan string, timeout time.
 				ID:   c.id,
 				Msg:  (txt + "\000"), // have to append the null byte that the scanner strips
 			}
-		} else {
-			// TODO: find a way to write a test for this
-			log.Printf("Received heartbeat from conn %s\n", c.id)
 		}
-		log.Printf("Setting Read Deadline for conn %s\n", c.id)
 		c.conn.SetReadDeadline(time.Now().Add(timeout).Add(500 * time.Millisecond))
 	}
 	done <- c.id
