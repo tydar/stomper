@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+    queue:
+        image: "ghcr.io/tydar/stomper:main"
+        environment:
+            STOMPER_TCPDEADLINE: 0
+            STOMPER_TOPICS: /queue/example
+            STOMPER_LOGTOSTDOUT: "true"
+            STOMPER_HOSTNAME: queue
+    subscriber:
+        build: ./subscriber/
+    publisher:
+        build: ./publisher/
