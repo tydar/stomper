@@ -7,3 +7,9 @@ To run this example, navigate to this folder on your local machine and run `dock
 You can observe this process in two ways: if you run just `docker-compose up`, the stomper server will write its logs to STDOUT and you can see the operation there. If you run `docker-compose up -d` to detach, then you can use `docker exec` to spawn a shell instance in the subscriber container and observe the messages written to the file there.
 
 N.b. both the stomper image and the publisher image are built using a multi-stage process based on Google's distroless images to minimize size. The subscriber image is built on the full `golang:1.17-alpine` image to allow easy access via `docker exec`.
+
+To test with larger numbers of clients, can run a command like:
+
+```shell
+$ docker-compose up  --scale publisher=5 --scale subscriber=3
+```
