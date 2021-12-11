@@ -11,14 +11,16 @@ type Engine struct {
 	SM       *SubscriptionManager
 	Incoming chan CnxMgrMsg
 	Store    Store
+	SendWorkers int
 }
 
-func NewEngine(st Store, cm *ConnectionManager, inc chan CnxMgrMsg) *Engine {
+func NewEngine(st Store, cm *ConnectionManager, inc chan CnxMgrMsg, sendWorkers int) *Engine {
 	return &Engine{
 		CM:       cm,
 		Store:    st,
 		Incoming: inc,
 		SM:       NewSubscriptionManager(),
+		SendWorkers: sendWorkers,
 	}
 }
 
@@ -33,45 +35,7 @@ func (e *Engine) Start() error {
 	// TODO: spin this off into its own fuction
 	//       && handle additional worker goroutines configurably
 
-	go func() {
-		for {
-			dests := e.Store.Destinations()
-			for j := range dests {
-				dest := dests[j]
-				count, err := e.Store.Len(dest)
-				if err != nil {
-					log.Printf("SEND_ERROR: No such destination\n")
-				}
-				if count > 0 {
-					subscribers := e.SM.ClientsByDestination(dest)
-					messageFrame, err := e.Store.Pop(dest)
-					if err != nil {
-						log.Println(err)
-					} else {
-						log.Printf("SENDING_MESSAGE: on queue %s to %d subscribers\n", dest, len(subscribers))
-						for i := range subscribers {
-							sub := subscribers[i]
-							uniqueHeaders := make(map[string]string)
-							for k, v := range messageFrame.Headers {
-								uniqueHeaders[k] = v
-							}
-							uniqueFrame := Frame{
-								Command: messageFrame.Command,
-								Headers: uniqueHeaders,
-								Body:    messageFrame.Body,
-							}
-							uniqueFrame.Headers["subscription"] = sub.ID
-							messageString := UnmarshalFrame(uniqueFrame)
-							errWrite := e.CM.Write(sub.ClientID, messageString)
-							if errWrite != nil {
-								log.Printf("ERROR: client %s: MESSAGE send failed\n", subscribers[i])
-							}
-						}
-					}
-				}
-			}
-		}
-	}()
+	go e.WorkerManager(e.SendWorkers)
 
 	log.Println("Entering main loop")
 	for msg := range e.Incoming {
@@ -225,4 +189,60 @@ func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
 	e.Store.Enqueue(dest, messageFrame)
 
 	return nil
+}
+
+type SendJob struct {
+	msg	          Frame
+	subscriptions []Subscription
+}
+
+func (e *Engine) SendWorker(id int, jobs <-chan SendJob) {
+	for j := range jobs {
+		for _, sub := range j.subscriptions {
+			clientID := sub.ClientID
+			uniqueHeaders := make(map[string]string)
+			for k, v := range j.msg.Headers {
+				uniqueHeaders[k] = v
+			}
+			uniqueHeaders["subscription"] = sub.ID
+
+			uFrame := Frame{
+				Command: j.msg.Command,
+				Headers: uniqueHeaders,
+				Body:    j.msg.Body,
+			}
+			uFrString := UnmarshalFrame(uFrame)
+			err := e.CM.Write(clientID, uFrString)
+			if err != nil {
+				log.Printf("worker %d: SEND_ERROR: %s\n", id, err)
+			}
+		}
+	}
+}
+
+func (e *Engine) WorkerManager(numWorkers int) {
+	sChan := make(chan SendJob)
+	for i := 0; i < numWorkers; i++ {
+		go e.SendWorker(i, sChan)
+	}
+	for {
+		dests := e.Store.Destinations()
+		for j := range dests {
+			dest := dests[j]
+			count, err := e.Store.Len(dest)
+			if err != nil {
+				log.Printf("SEND_ERROR: No such destination\n")
+			}
+			if count > 0 {
+				subscribers := e.SM.ClientsByDestination(dest)
+				messageFrame, err := e.Store.Pop(dest)
+				if err != nil {
+					log.Println(err)
+				} else {
+					log.Printf("SENDING_MESSAGE: on queue %s to %d subscribers\n", dest, len(subscribers))
+					sChan <- SendJob{msg: messageFrame, subscriptions: subscribers,}
+				}
+			}
+		}
+	}
 }
