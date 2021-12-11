@@ -7,19 +7,19 @@ import (
 )
 
 type Engine struct {
-	CM       *ConnectionManager
-	SM       *SubscriptionManager
-	Incoming chan CnxMgrMsg
-	Store    Store
+	CM          *ConnectionManager
+	SM          *SubscriptionManager
+	Incoming    chan CnxMgrMsg
+	Store       Store
 	SendWorkers int
 }
 
 func NewEngine(st Store, cm *ConnectionManager, inc chan CnxMgrMsg, sendWorkers int) *Engine {
 	return &Engine{
-		CM:       cm,
-		Store:    st,
-		Incoming: inc,
-		SM:       NewSubscriptionManager(),
+		CM:          cm,
+		Store:       st,
+		Incoming:    inc,
+		SM:          NewSubscriptionManager(),
 		SendWorkers: sendWorkers,
 	}
 }
@@ -192,7 +192,7 @@ func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
 }
 
 type SendJob struct {
-	msg	          Frame
+	msg           Frame
 	subscriptions []Subscription
 }
 
@@ -240,7 +240,7 @@ func (e *Engine) WorkerManager(numWorkers int) {
 					log.Println(err)
 				} else {
 					log.Printf("SENDING_MESSAGE: on queue %s to %d subscribers\n", dest, len(subscribers))
-					sChan <- SendJob{msg: messageFrame, subscriptions: subscribers,}
+					sChan <- SendJob{msg: messageFrame, subscriptions: subscribers}
 				}
 			}
 		}
