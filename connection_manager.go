@@ -137,16 +137,20 @@ func NewConnection(conn net.Conn, id string) *Connection {
 func (c *Connection) Read(readTo chan CnxMgrMsg, done chan string, timeout time.Duration) {
 	scanner := bufio.NewScanner(c.conn)
 	scanner.Split(ScanNullTerm)
-	c.conn.SetReadDeadline(time.Now().Add(timeout))
 	for {
 		if ok := scanner.Scan(); !ok {
 			break
 		}
-		readTo <- CnxMgrMsg{
-			Type: FRAME,
-			ID:   c.id,
-			Msg:  (scanner.Text() + "\000"), // have to append the null byte that the scanner strips
+		txt := scanner.Text()
+		if txt != "\n" {
+			// if it's not just a heartbeat EOL, send the frame
+			readTo <- CnxMgrMsg{
+				Type: FRAME,
+				ID:   c.id,
+				Msg:  (txt + "\000"), // have to append the null byte that the scanner strips
+			}
 		}
+		c.conn.SetReadDeadline(time.Now().Add(timeout).Add(500 * time.Millisecond))
 	}
 	done <- c.id
 }
@@ -181,6 +185,11 @@ func ScanNullTerm(data []byte, atEOF bool) (int, []byte, error) {
 	if i := bytes.IndexByte(data, '\000'); i >= 0 {
 		// there is a null-terminated frame
 		return i + 1, data[0:i], nil
+	}
+
+	// if we did not find a null-terminated frame, still need to check for \n
+	if len(data) > 0 && data[0] == '\n' {
+		return 1, []byte{data[0]}, nil
 	}
 
 	// if we are at EOF and we have data, return it so we can see what's going on

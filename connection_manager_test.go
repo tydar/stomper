@@ -80,7 +80,7 @@ func TestScanNullTerm(t *testing.T) {
 	empty := []byte("")
 	nullTerm := []byte("Null-term\000")
 	multipleNull := []byte("Null-term\000another\000")
-	noNull := []byte("Justwords")
+	noNull := []byte("Justwords\n")
 	var tests = []struct {
 		input []byte
 		eof   bool
@@ -92,7 +92,7 @@ func TestScanNullTerm(t *testing.T) {
 		{nullTerm, false, 10, nullTerm[:len(nullTerm)-1], nil},
 		{multipleNull, false, 10, nullTerm[:len(nullTerm)-1], nil},
 		{noNull, false, 0, nil, nil},
-		{noNull, true, 9, noNull, nil},
+		{noNull, true, 10, noNull, nil},
 	}
 
 	for _, tt := range tests {
