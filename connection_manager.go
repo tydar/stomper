@@ -189,7 +189,7 @@ func ScanNullTerm(data []byte, atEOF bool) (int, []byte, error) {
 
 	// if we did not find a null-terminated frame, still need to check for \n
 	if len(data) > 0 && data[0] == '\n' {
-		return 1, []byte{data[0],}, nil
+		return 1, []byte{data[0]}, nil
 	}
 
 	// if we are at EOF and we have data, return it so we can see what's going on

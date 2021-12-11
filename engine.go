@@ -147,7 +147,7 @@ func (e *Engine) handleConnect(msg CnxMgrMsg) string {
 	heartbeatStr := "0"
 	if e.CM.timeout.Milliseconds() > 0 {
 		heartbeatStr = strconv.Itoa(int(e.CM.timeout.Milliseconds()))
-	} 
+	}
 	return UnmarshalFrame(Frame{
 		Command: CONNECTED,
 		Headers: map[string]string{"version": "1.2", "host": e.CM.Hostname(), "heart-beat": "0," + heartbeatStr},
