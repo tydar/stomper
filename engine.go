@@ -146,7 +146,7 @@ func (e *Engine) handleConnect(msg CnxMgrMsg) string {
 	// TODO: handle protocol negotiation ERROR generation
 	heartbeatStr := "0"
 	if e.CM.timeout.Milliseconds() > 0 {
-		heartbeatStr := strconv.Itoa(int(e.CM.timeout.Milliseconds()))
+		heartbeatStr = strconv.Itoa(int(e.CM.timeout.Milliseconds()))
 	} 
 	return UnmarshalFrame(Frame{
 		Command: CONNECTED,
