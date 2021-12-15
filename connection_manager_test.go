@@ -12,7 +12,7 @@ import (
 
 func TestConnectionManager(t *testing.T) {
 	messages := make(chan CnxMgrMsg)
-	cm := NewConnectionManager("", 32801, messages, 5)
+	cm := NewConnectionManager("", 32801, messages, 1)
 	err := cm.Start()
 	if err != nil {
 		t.Error("error starting cnx manager", err)
@@ -70,6 +70,26 @@ func TestConnectionManager(t *testing.T) {
 		msg := <-messages
 		conn.Close()
 		msg = <-messages
+		if msg.Type != CONNECTION_CLOSED {
+			t.Error("connection failed to close or another message sent")
+		}
+	})
+
+	t.Run("_Disconnect", func(t *testing.T) {
+		conn, err := net.Dial("tcp", ":32801")
+		if err != nil {
+			t.Error("coult not connect to server: ", err)
+		}
+		defer conn.Close()
+
+		msg := <-messages
+		err = cm.Disconnect(msg.ID)
+		msg = <-messages
+
+		if err != nil {
+			t.Error("could not disconnect from client: ", err)
+		}
+
 		if msg.Type != CONNECTION_CLOSED {
 			t.Error("connection failed to close or another message sent")
 		}
