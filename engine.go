@@ -99,6 +99,10 @@ func (e *Engine) Start() error {
 					}
 				}
 			case DISCONNECT:
+				err = e.handleDisconnect(msg, frame)
+				if err != nil {
+					log.Println(err)
+				}
 			}
 		}
 	}
@@ -117,6 +121,10 @@ func (e *Engine) handleConnect(msg CnxMgrMsg) string {
 		Headers: map[string]string{"version": "1.2", "host": e.CM.Hostname(), "heart-beat": "0," + heartbeatStr},
 		Body:    "",
 	})
+}
+
+func (e *Engine) handleDisconnect(msg CnxMgrMsg, frame Frame) error {
+	return e.CM.Disconnect(msg.ID)
 }
 
 func (e *Engine) handleSubscribe(msg CnxMgrMsg, frame Frame) error {

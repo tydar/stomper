@@ -121,6 +121,20 @@ func (cm *ConnectionManager) handleRemovals(requests chan string) {
 	}
 }
 
+func (cm *ConnectionManager) Disconnect(id string) error {
+	cm.mu.RLock()
+	connection, prs := cm.connections[id]
+	to := cm.timeout
+	cm.mu.RUnlock()
+
+	if prs {
+		connection.Disconnect(to)
+	} else {
+		return fmt.Errorf("no such connection: %s\n", id)
+	}
+	return nil
+}
+
 // Connection
 type Connection struct {
 	id   string
@@ -160,6 +174,13 @@ func (c *Connection) Read(readTo chan CnxMgrMsg, done chan string, timeout time.
 func (c *Connection) Write(msg string) error {
 	_, err := c.conn.Write([]byte(msg))
 	return err
+}
+
+func (c *Connection) Disconnect(timeout time.Duration) error {
+	// if a connection asks to disconnect, wait timeout seconds and close the connection
+	log.Printf("DISCONNECT from client ID %s\n", c.id)
+	time.Sleep(timeout)
+	return c.conn.Close()
 }
 
 // CnxMgrMsg
