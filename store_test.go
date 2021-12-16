@@ -109,7 +109,7 @@ func TestMemoryStoreAddPrs(t *testing.T) {
 
 	err := ms.AddDestination("/queue/main")
 	if err != nil {
-		t.Error("desination add error: ", err)
+		t.Error("destination add error: ", err)
 	}
 
 	dest := ms.Destinations()
