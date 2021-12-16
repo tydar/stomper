@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -49,6 +50,25 @@ func (m *MemoryStore) Pop(destination string) (Frame, error) {
 	f := q[0]
 	m.Queues[destination] = q[1:]
 	return f, nil
+}
+
+func (m *MemoryStore) AddDestination(destination string) error {
+	if m.Prs(destination) {
+		return fmt.Errorf("destination %s already exists", destination)
+	}
+
+	m.Lock()
+	m.Queues[destination] = make([]Frame, 0)
+	m.Unlock()
+
+	return nil
+}
+
+func (m *MemoryStore) Prs(destination string) bool {
+	m.Lock()
+	_, prs := m.Queues[destination]
+	m.Unlock()
+	return prs
 }
 
 func (m *MemoryStore) Len(destination string) (int, error) {

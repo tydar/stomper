@@ -102,3 +102,24 @@ func TestMemoryStorePop(t *testing.T) {
 		})
 	}
 }
+
+func TestMemoryStoreAddPrs(t *testing.T) {
+	emptMap := make(map[string][]Frame)
+	ms := MemoryStore{Queues: emptMap}
+
+	err := ms.AddDestination("/queue/main")
+	if err != nil {
+		t.Error("desination add error: ", err)
+	}
+
+	dest := ms.Destinations()
+	if dest[0] != "/queue/main" {
+		t.Errorf("destination not added correctly: got %s wanted %s", dest, "/queue/main")
+	}
+
+	err = ms.AddDestination("/queue/main")
+	if err == nil {
+		t.Error("allowed duplicate destination creation")
+	}
+
+}
