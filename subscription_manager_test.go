@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"testing"
+
 	// "reflect"
 
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ func TestSubscriptionManager(t *testing.T) {
 	sm := NewSubscriptionManager()
 	clientID := uuid.NewString()
 	subID := "test"
+	subID2 := "testing"
 	dest := "/queue/test"
 
 	// sm.Subscribe
@@ -60,6 +62,21 @@ func TestSubscriptionManager(t *testing.T) {
 
 		if s.ClientID != clientID {
 			t.Errorf("Retrieved incorrect sub, somehow: got %s wanted %s\n", s.ClientID, clientID)
+		}
+	})
+
+	t.Run("_UnsubscribeAll", func(t *testing.T) {
+		err := sm.Subscribe(clientID, subID2, dest)
+		if err != nil {
+			t.Error("Subscription error: ", err)
+		}
+
+		sm.UnsubscribeAll(clientID)
+
+		_, err = sm.Get(clientID, subID)
+		_, err2 := sm.Get(clientID, subID2)
+		if err == nil || err2 == nil {
+			t.Error("UnsubscribeAll left a sub")
 		}
 	})
 }

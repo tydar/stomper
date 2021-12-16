@@ -104,6 +104,8 @@ func (e *Engine) Start() error {
 					log.Println(err)
 				}
 			}
+		} else if msg.Type == CONNECTION_CLOSED {
+			e.SM.UnsubscribeAll(msg.ID)
 		}
 	}
 	return nil
