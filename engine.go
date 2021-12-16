@@ -102,6 +102,11 @@ func (e *Engine) Start() error {
 				err = e.handleDisconnect(msg, frame)
 				if err != nil {
 					log.Println(err)
+				} else {
+					err = e.handleReceipt(msg, frame)
+					if err != nil {
+						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
+					}
 				}
 			}
 		} else if msg.Type == CONNECTION_CLOSED {
