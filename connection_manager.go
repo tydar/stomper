@@ -130,7 +130,7 @@ func (cm *ConnectionManager) Disconnect(id string) error {
 	if prs {
 		connection.Disconnect(to)
 	} else {
-		return fmt.Errorf("no such connection: %s\n", id)
+		return fmt.Errorf("no such connection: %s", id)
 	}
 	return nil
 }
