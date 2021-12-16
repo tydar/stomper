@@ -13,6 +13,8 @@ type Store interface {
 	Pop(destination string) (Frame, error)
 	Len(destination string) (int, error)
 	Destinations() []string
+	AddDestination(destination string) error
+	Prs(destination string) bool
 }
 
 type MemoryStore struct {
