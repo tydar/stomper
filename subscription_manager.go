@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 type SubscriptionManager struct {
@@ -40,6 +41,15 @@ func (sm *SubscriptionManager) Unsubscribe(clientID string, subID string) error 
 	log.Printf("UNSUBSCRIBE: sub %s from client %s to dest %s\n", subID, clientID, sub.Destination)
 	delete(sm.Subscriptions, internalSubID)
 	return nil
+}
+
+func (sm *SubscriptionManager) UnsubscribeAll(clientID string) {
+	for k := range sm.Subscriptions {
+		if strings.HasPrefix(k, clientID) {
+			delete(sm.Subscriptions, k)
+		}
+	}
+	log.Printf("UNSUBSCRIBE_ALL for client %s", clientID)
 }
 
 func (sm *SubscriptionManager) Get(clientID string, subID string) (Subscription, error) {
