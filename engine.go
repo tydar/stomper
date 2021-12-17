@@ -30,11 +30,7 @@ func (e *Engine) Start() error {
 		return err
 	}
 
-	// start send worker
-	// simple pub-sub architecture here
-	// TODO: spin this off into its own fuction
-	//       && handle additional worker goroutines configurably
-
+	// start send workers
 	go e.WorkerManager(e.SendWorkers)
 
 	log.Println("Entering main loop")

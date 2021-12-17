@@ -58,8 +58,11 @@ An example config file is provided: `stomper_config.yaml`. Stomper will look for
   * MESSAGE
   * RECEIPT
   * ERROR
+  * DISCONNECT
 * Semantics
   * Supports only pub-sub currently
+* runtime topic creation by clients
+
 
 ## TODO
 
@@ -67,6 +70,7 @@ An example config file is provided: `stomper_config.yaml`. Stomper will look for
     * Size limits?
     * Auth?
         * crypto/tls
+* RBAC?
 * Define semantics beyond STOMP protocol
 * Implement frame actions
     * BEGIN
@@ -74,6 +78,6 @@ An example config file is provided: `stomper_config.yaml`. Stomper will look for
     * ABORT
     * ACK
     * NACK
-    * DISCONNECT
 * Message queueing (depends on ACK, NACK)
 * Configuration of worker pool for message forwarding
+
