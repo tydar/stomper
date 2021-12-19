@@ -12,13 +12,13 @@ Currently one simple point-to-point messaging example is included at `examples/P
 
 ## Install and test latest build from GHCR
 
-1. Pull from Docker:
+1. Pull Docker image from the GHCR:
 
 ```shell
 $ docker pull ghcr.io/tydar/stomper:main
 ```
 
-2. Run and expose the port from the example config:
+2. Run and publish the port from the example config:
 
 ```shell
 $ docker run -d -p 32801:32801 ghcr.io/tydar/stomper:main
