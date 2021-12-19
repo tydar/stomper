@@ -45,6 +45,10 @@ $ docker run -d -p 32801:32801 --env STOMPER_TOPICS="/queue/env1 /queue/env2" gh
 
 An example config file is provided: `stomper_config.yaml`. Stomper will look for a file with this name in either `/etc/stomper` or the directory from which it is called.
 
+## Notes beyond STOMP specification
+
+* Creating a topic with a message
+    * If a SUBSCRIBE frame includes a header with key `create` and value `true`, it will create the topic if it does not already exist.
 ## Done
 
 * Frame parsing

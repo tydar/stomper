@@ -140,7 +140,24 @@ func (e *Engine) handleSubscribe(msg CnxMgrMsg, frame Frame) error {
 	if !prs {
 		return fmt.Errorf("error: client %s: no destination on SUBSCRIBE frame", msg.ID)
 	}
-	// TODO: add destination validation
+	create, prs := frame.Headers["create"]
+	if !prs {
+		create = "false"
+	}
+
+	destPrs := e.Store.Prs(dest)
+	if create != "true" {
+		if !destPrs {
+			return fmt.Errorf("error: no such destination %s", dest)
+		}
+	} else {
+		if !destPrs {
+			err := e.Store.AddDestination(dest)
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return e.SM.Subscribe(clientID, subID, dest)
 }
 

@@ -24,14 +24,14 @@ func TestMemoryStoreEnqueue(t *testing.T) {
 			initial: emptMap,
 			dest:    "/queue/test",
 			frame:   fr,
-			final:   map[string][]Frame{"/queue/test": []Frame{fr}},
+			final:   map[string][]Frame{"/queue/test": {fr}},
 			err:     true,
 		},
 		{
 			initial: testDest,
 			dest:    "/queue/test",
 			frame:   fr,
-			final:   map[string][]Frame{"/queue/test": []Frame{fr}},
+			final:   map[string][]Frame{"/queue/test": {fr}},
 			err:     false,
 		},
 	}
@@ -56,7 +56,7 @@ func TestMemoryStorePop(t *testing.T) {
 	fr := Frame{Command: "SEND", Headers: emptHead, Body: ""}
 	emptMap := make(map[string][]Frame)
 	mapWithOne := map[string][]Frame{
-		"/queue/test": []Frame{fr},
+		"/queue/test": {fr},
 	}
 	destWithNone := map[string][]Frame{
 		"/queue/test": make([]Frame, 0),
@@ -101,4 +101,25 @@ func TestMemoryStorePop(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMemoryStoreAddPrs(t *testing.T) {
+	emptMap := make(map[string][]Frame)
+	ms := MemoryStore{Queues: emptMap}
+
+	err := ms.AddDestination("/queue/main")
+	if err != nil {
+		t.Error("destination add error: ", err)
+	}
+
+	dest := ms.Destinations()
+	if dest[0] != "/queue/main" {
+		t.Errorf("destination not added correctly: got %s wanted %s", dest, "/queue/main")
+	}
+
+	err = ms.AddDestination("/queue/main")
+	if err == nil {
+		t.Error("allowed duplicate destination creation")
+	}
+
 }
