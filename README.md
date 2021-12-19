@@ -6,6 +6,8 @@ A Go message queue implementing the [STOMP protocol](https://stomp.github.io/sto
 
 ## Examples
 
+I have written a simple chat client designed to use a generic STOMP pub-sub server called [stomp-chat](https://github.com/tydar/stomp-chat) that can serve as an example of a client for this server.
+
 Currently one simple point-to-point messaging example is included at `examples/PointToPoint`. Clone the repo, navigate to that folder, and run `docker-compose up` to see it in action.
 
 ## Install and test latest build from GHCR
@@ -84,4 +86,5 @@ An example config file is provided: `stomper_config.yaml`. Stomper will look for
     * NACK
 * Message queueing (depends on ACK, NACK)
 * Configuration of worker pool for message forwarding
+
 
