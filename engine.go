@@ -249,6 +249,8 @@ func (e *Engine) SendWorker(id int, jobs <-chan SendJob) {
 }
 
 func (e *Engine) WorkerManager(numWorkers int) {
+	log.Printf("starting %d workers\n", numWorkers)
+
 	sChan := make(chan SendJob)
 	for i := 0; i < numWorkers; i++ {
 		go e.SendWorker(i, sChan)

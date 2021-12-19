@@ -24,4 +24,6 @@ COPY --from=build /stomper /app/stomper
 
 EXPOSE 32801
 
+USER nonroot:nonroot
+
 ENTRYPOINT [ "/app/stomper" ]
