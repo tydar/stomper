@@ -2,7 +2,7 @@
 
 ![Actions Status](https://github.com/tydar/stomper/actions/workflows/go.yml/badge.svg)
 
-A Go message queue implementing the [STOMP protocol](https://stomp.github.io/stomp-specification-1.2.html).
+A message broker implementing the [STOMP protocol](https://stomp.github.io/stomp-specification-1.2.html) written in Go.
 
 ## Examples
 
@@ -86,5 +86,6 @@ An example config file is provided: `stomper_config.yaml`. Stomper will look for
     * NACK
 * Message queueing (depends on ACK, NACK)
 * Configuration of worker pool for message forwarding
+
 
 
