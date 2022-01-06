@@ -9,6 +9,7 @@ import (
 type Engine struct {
 	CM          *ConnectionManager
 	SM          *SubscriptionManager
+	TM          *TransactionManager
 	Incoming    chan CnxMgrMsg
 	Store       Store
 	SendWorkers int
@@ -20,6 +21,7 @@ func NewEngine(st Store, cm *ConnectionManager, inc chan CnxMgrMsg, sendWorkers 
 		Store:       st,
 		Incoming:    inc,
 		SM:          NewSubscriptionManager(),
+		TM:          NewTransactionManager(),
 		SendWorkers: sendWorkers,
 	}
 }
@@ -100,6 +102,24 @@ func (e *Engine) Start() error {
 					log.Println(err)
 				} else {
 					err = e.handleReceipt(msg, frame)
+					if err != nil {
+						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
+					}
+				}
+			case BEGIN:
+				err = e.handleBegin(msg, frame)
+				if err != nil {
+					log.Println(err)
+					err := e.handleError(msg, err)
+					if err != nil {
+						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
+					}
+				}
+			case ABORT:
+				err = e.handleAbort(msg, frame)
+				if err != nil {
+					log.Println(err)
+					err := e.handleError(msg, err)
 					if err != nil {
 						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
 					}
@@ -208,15 +228,42 @@ func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
 		return fmt.Errorf("error: client %s: no destination header", msg.ID)
 	}
 
+	// if we have a
+	tx, prs := frame.Headers["transaction"]
+	if prs {
+		txFrame := Frame{
+			Command: SEND,
+			Headers: newHeaders,
+			Body:    frame.Body,
+		}
+		return e.TM.AddFrame(tx, msg.ID, txFrame)
+	}
+
 	messageFrame := Frame{
 		Command: MESSAGE,
 		Headers: newHeaders,
 		Body:    frame.Body,
 	}
 
-	e.Store.Enqueue(dest, messageFrame)
+	return e.Store.Enqueue(dest, messageFrame)
+}
 
-	return nil
+func (e *Engine) handleBegin(msg CnxMgrMsg, frame Frame) error {
+	txId, ok := frame.Headers["transaction"]
+	if !ok {
+		return fmt.Errorf("error: client %s: no transaction header", msg.ID)
+	}
+
+	return e.TM.StartTransaction(txId, msg.ID)
+}
+
+func (e *Engine) handleAbort(msg CnxMgrMsg, frame Frame) error {
+	txId, ok := frame.Headers["transaction"]
+	if !ok {
+		return fmt.Errorf("error: client %s: no transaction header", msg.ID)
+	}
+
+	return e.TM.AbortTransaction(txId, msg.ID)
 }
 
 type SendJob struct {
