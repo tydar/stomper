@@ -266,30 +266,36 @@ func (e *Engine) handleAbort(msg CnxMgrMsg, frame Frame) error {
 	return e.TM.AbortTransaction(txId, msg.ID)
 }
 
+// msg is of type []Frame
+// if len(msg) == 1 that means we're sending a regular message
+// if len(msg) > 1 that means we're working with a transaction
 type SendJob struct {
-	msg           Frame
+	msg           []Frame
 	subscriptions []Subscription
 }
 
 func (e *Engine) SendWorker(id int, jobs <-chan SendJob) {
 	for j := range jobs {
-		for _, sub := range j.subscriptions {
-			clientID := sub.ClientID
-			uniqueHeaders := make(map[string]string)
-			for k, v := range j.msg.Headers {
-				uniqueHeaders[k] = v
-			}
-			uniqueHeaders["subscription"] = sub.ID
+		if len(j.msg) == 1 {
+			for _, sub := range j.subscriptions {
+				msg := j.msg[0]
+				clientID := sub.ClientID
+				uniqueHeaders := make(map[string]string)
+				for k, v := range msg.Headers {
+					uniqueHeaders[k] = v
+				}
+				uniqueHeaders["subscription"] = sub.ID
 
-			uFrame := Frame{
-				Command: j.msg.Command,
-				Headers: uniqueHeaders,
-				Body:    j.msg.Body,
-			}
-			uFrString := UnmarshalFrame(uFrame)
-			err := e.CM.Write(clientID, uFrString)
-			if err != nil {
-				log.Printf("worker %d: SEND_ERROR: %s\n", id, err)
+				uFrame := Frame{
+					Command: msg.Command,
+					Headers: uniqueHeaders,
+					Body:    msg.Body,
+				}
+				uFrString := UnmarshalFrame(uFrame)
+				err := e.CM.Write(clientID, uFrString)
+				if err != nil {
+					log.Printf("worker %d: SEND_ERROR: %s\n", id, err)
+				}
 			}
 		}
 	}

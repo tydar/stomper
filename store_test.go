@@ -7,31 +7,31 @@ import (
 )
 
 func TestMemoryStoreEnqueue(t *testing.T) {
-	emptMap := make(map[string][]Frame)
-	testDest := map[string][]Frame{
-		"/queue/test": make([]Frame, 0),
+	emptMap := make(map[string][][]Frame)
+	testDest := map[string][][]Frame{
+		"/queue/test": make([][]Frame, 0),
 	}
 	emptHead := make(map[string]string)
 	fr := Frame{Command: "SEND", Headers: emptHead, Body: ""}
 	var tests = []struct {
-		initial map[string][]Frame
+		initial map[string][][]Frame
 		dest    string
 		frame   Frame
-		final   map[string][]Frame
+		final   map[string][][]Frame
 		err     bool
 	}{
 		{
 			initial: emptMap,
 			dest:    "/queue/test",
 			frame:   fr,
-			final:   map[string][]Frame{"/queue/test": {fr}},
+			final:   map[string][][]Frame{"/queue/test": {{fr}}},
 			err:     true,
 		},
 		{
 			initial: testDest,
 			dest:    "/queue/test",
 			frame:   fr,
-			final:   map[string][]Frame{"/queue/test": {fr}},
+			final:   map[string][][]Frame{"/queue/test": {{fr}}},
 			err:     false,
 		},
 	}
@@ -54,35 +54,35 @@ func TestMemoryStoreEnqueue(t *testing.T) {
 func TestMemoryStorePop(t *testing.T) {
 	emptHead := make(map[string]string)
 	fr := Frame{Command: "SEND", Headers: emptHead, Body: ""}
-	emptMap := make(map[string][]Frame)
-	mapWithOne := map[string][]Frame{
-		"/queue/test": {fr},
+	emptMap := make(map[string][][]Frame)
+	mapWithOne := map[string][][]Frame{
+		"/queue/test": {{fr}},
 	}
-	destWithNone := map[string][]Frame{
-		"/queue/test": make([]Frame, 0),
+	destWithNone := map[string][][]Frame{
+		"/queue/test": make([][]Frame, 0),
 	}
 	var tests = []struct {
-		initial map[string][]Frame
+		initial map[string][][]Frame
 		dest    string
-		result  Frame
+		result  []Frame
 		err     bool
 	}{
 		{
 			initial: emptMap,
 			dest:    "/queue/test",
-			result:  Frame{},
+			result:  []Frame{},
 			err:     true,
 		},
 		{
 			initial: mapWithOne,
 			dest:    "/queue/test",
-			result:  fr,
+			result:  []Frame{fr},
 			err:     false,
 		},
 		{
 			initial: destWithNone,
 			dest:    "/queue/test",
-			result:  Frame{},
+			result:  []Frame{},
 			err:     true,
 		},
 	}
@@ -104,7 +104,7 @@ func TestMemoryStorePop(t *testing.T) {
 }
 
 func TestMemoryStoreAddPrs(t *testing.T) {
-	emptMap := make(map[string][]Frame)
+	emptMap := make(map[string][][]Frame)
 	ms := MemoryStore{Queues: emptMap}
 
 	err := ms.AddDestination("/queue/main")

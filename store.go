@@ -10,7 +10,7 @@ type Store interface {
 	// defines the methods required for a store to back
 	// the queueing service
 	Enqueue(destination string, message Frame) error
-	Pop(destination string) (Frame, error)
+	Pop(destination string) ([]Frame, error)
 	Len(destination string) (int, error)
 	Destinations() []string
 	AddDestination(destination string) error
@@ -21,7 +21,7 @@ type MemoryStore struct {
 	// Defines a basic in-memory queue store
 	// Concurrency protected by sync.Mutex
 	sync.Mutex
-	Queues map[string][]Frame
+	Queues map[string][][]Frame
 }
 
 func (m *MemoryStore) Enqueue(destination string, message Frame) error {
@@ -29,23 +29,23 @@ func (m *MemoryStore) Enqueue(destination string, message Frame) error {
 	defer m.Unlock()
 	q, prs := m.Queues[destination]
 	if prs {
-		m.Queues[destination] = append(q, message)
+		m.Queues[destination] = append(q, []Frame{message})
 		return nil
 	} else {
 		return errors.New("no such destination")
 	}
 }
 
-func (m *MemoryStore) Pop(destination string) (Frame, error) {
+func (m *MemoryStore) Pop(destination string) ([]Frame, error) {
 	l, err := m.Len(destination)
 	m.Lock()
 	defer m.Unlock()
 	if l == 0 {
-		return Frame{}, errors.New("destination queue empty")
+		return []Frame{}, errors.New("destination queue empty")
 	}
 
 	if err != nil {
-		return Frame{}, err
+		return []Frame{}, err
 	}
 
 	q := m.Queues[destination] // guaranteed to work by above conditions, hopefully
@@ -60,7 +60,7 @@ func (m *MemoryStore) AddDestination(destination string) error {
 	}
 
 	m.Lock()
-	m.Queues[destination] = make([]Frame, 0)
+	m.Queues[destination] = make([][]Frame, 0)
 	m.Unlock()
 
 	return nil

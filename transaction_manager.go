@@ -40,20 +40,17 @@ func (tm *TransactionManager) StartTransaction(id, connectionID string) error {
 // CommitTransaction is called when the engine handles a COMMIT frame
 // it pulls the transaction by its ID and the client's ID, then sends the Transaction as one unit
 // on the provided channel, at which point the Engine handles SENDing the messages
-func (tm *TransactionManager) CommitTransaction(id, connectionID string, out chan Transaction) error {
+func (tm *TransactionManager) CommitTransaction(id, connectionID string) (Transaction, error) {
 	internalTxId := internalTxId(id, connectionID)
 	tx, ok := tm.transactions[internalTxId]
 
 	if ok {
-		out <- tx
-		delete(tm.transactions, internalTxId)
-	} else {
-		return errors.New("no such transaction found")
+		defer delete(tm.transactions, internalTxId)
+		log.Printf("client %s: enacted commit for transaction %s\n", connectionID, id)
+		return tx, nil
 	}
 
-	log.Printf("client %s: enacted commit for transaction %s\n", connectionID, id)
-
-	return nil
+	return Transaction{}, errors.New("no such transaction found")
 }
 
 // AbortTransaction is called when the engine handles an ABORT frame
