@@ -9,6 +9,7 @@ import (
 type Engine struct {
 	CM          *ConnectionManager
 	SM          *SubscriptionManager
+	TM          *TransactionManager
 	Incoming    chan CnxMgrMsg
 	Store       Store
 	SendWorkers int
@@ -20,6 +21,7 @@ func NewEngine(st Store, cm *ConnectionManager, inc chan CnxMgrMsg, sendWorkers 
 		Store:       st,
 		Incoming:    inc,
 		SM:          NewSubscriptionManager(),
+		TM:          NewTransactionManager(),
 		SendWorkers: sendWorkers,
 	}
 }
@@ -102,6 +104,34 @@ func (e *Engine) Start() error {
 					err = e.handleReceipt(msg, frame)
 					if err != nil {
 						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
+					}
+				}
+			case BEGIN:
+				err = e.handleBegin(msg, frame)
+				if err != nil {
+					log.Println(err)
+					err := e.handleError(msg, err)
+					if err != nil {
+						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
+					}
+				}
+			case ABORT:
+				err = e.handleAbort(msg, frame)
+				if err != nil {
+					log.Println(err)
+					err := e.handleError(msg, err)
+					if err != nil {
+						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
+					}
+				}
+			case COMMIT:
+				err = e.handleCommit(msg, frame)
+				if err != nil {
+					err := fmt.Errorf("handleCommit: %v", err)
+					log.Println(err)
+					err = e.handleError(msg, err)
+					if err != nil {
+						log.Printf("handleError: client %s: %v\n", msg.ID, err)
 					}
 				}
 			}
@@ -208,41 +238,108 @@ func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
 		return fmt.Errorf("error: client %s: no destination header", msg.ID)
 	}
 
-	messageFrame := Frame{
+	// if we have a
+	tx, prs := frame.Headers["transaction"]
+	if prs {
+		txFrame := Frame{
+			Command: SEND,
+			Headers: newHeaders,
+			Body:    frame.Body,
+		}
+		return e.TM.AddFrame(tx, msg.ID, txFrame)
+	}
+
+	messageFrame := prepareMessage(frame)
+
+	return e.Store.Enqueue(dest, messageFrame)
+}
+
+func (e *Engine) handleBegin(msg CnxMgrMsg, frame Frame) error {
+	txId, ok := frame.Headers["transaction"]
+	if !ok {
+		return fmt.Errorf("error: client %s: no transaction header", msg.ID)
+	}
+
+	return e.TM.StartTransaction(txId, msg.ID)
+}
+
+func (e *Engine) handleAbort(msg CnxMgrMsg, frame Frame) error {
+	txId, ok := frame.Headers["transaction"]
+	if !ok {
+		return fmt.Errorf("error: client %s: no transaction header", msg.ID)
+	}
+
+	return e.TM.AbortTransaction(txId, msg.ID)
+}
+
+func (e *Engine) handleCommit(msg CnxMgrMsg, frame Frame) error {
+	// 1) receive transaction
+	// 2) Process all frames in transaction to MESSAGE
+	// 3) Enqueue Tx []Frame with e.Store.EnqueueTx
+	txId, ok := frame.Headers["transaction"]
+	if !ok {
+		return fmt.Errorf("commit %s: no transaction header", msg.ID)
+	}
+
+	tx, err := e.TM.CommitTransaction(txId, msg.ID)
+	if err != nil {
+		return fmt.Errorf("CommitTransaction: %v", err)
+	}
+
+	finalTx := make(map[string]Frame, len(tx.frames))
+	for i := range tx.frames {
+		newFr := prepareMessage(tx.frames[i])
+		dest := newFr.Headers["destination"] // should be guaranteed by initial handleSend call
+		finalTx[dest] = newFr
+	}
+
+	return e.Store.EnqueueTx(finalTx)
+}
+
+// deep copy a SEND frame to a message frame to avoid race conditions
+func prepareMessage(frame Frame) Frame {
+	newHeaders := make(map[string]string)
+	for k, v := range frame.Headers {
+		newHeaders[k] = v
+	}
+
+	return Frame{
 		Command: MESSAGE,
 		Headers: newHeaders,
 		Body:    frame.Body,
 	}
-
-	e.Store.Enqueue(dest, messageFrame)
-
-	return nil
 }
 
+// msg is of type []Frame
+// if len(msg) == 1 that means we're sending a regular message
+// if len(msg) > 1 that means we're working with a transaction
 type SendJob struct {
-	msg           Frame
+	msg           []Frame
 	subscriptions []Subscription
 }
 
 func (e *Engine) SendWorker(id int, jobs <-chan SendJob) {
 	for j := range jobs {
-		for _, sub := range j.subscriptions {
-			clientID := sub.ClientID
-			uniqueHeaders := make(map[string]string)
-			for k, v := range j.msg.Headers {
-				uniqueHeaders[k] = v
-			}
-			uniqueHeaders["subscription"] = sub.ID
+		if len(j.msg) == 1 {
+			for _, sub := range j.subscriptions {
+				msg := j.msg[0]
+				clientID := sub.ClientID
+				uniqueHeaders := make(map[string]string)
+				for k, v := range msg.Headers {
+					uniqueHeaders[k] = v
+				}
+				uniqueHeaders["subscription"] = sub.ID
 
-			uFrame := Frame{
-				Command: j.msg.Command,
-				Headers: uniqueHeaders,
-				Body:    j.msg.Body,
-			}
-			uFrString := UnmarshalFrame(uFrame)
-			err := e.CM.Write(clientID, uFrString)
-			if err != nil {
-				log.Printf("worker %d: SEND_ERROR: %s\n", id, err)
+				uFrame := Frame{
+					Command: msg.Command,
+					Headers: uniqueHeaders,
+					Body:    msg.Body,
+				}
+				uFrString := UnmarshalFrame(uFrame)
+				err := e.CM.Write(clientID, uFrString)
+				if err != nil {
+					log.Printf("worker %d: SEND_ERROR: %s\n", id, err)
+				}
 			}
 		}
 	}

@@ -63,14 +63,14 @@ func main() {
 	cm := NewConnectionManager(viper.GetString("hostname"), viper.GetInt("port"), comms, viper.GetDuration("tcpdeadline"))
 
 	topics := viper.GetStringSlice("topics")
-	stQueues := make(map[string][]Frame)
+	stQueues := make(map[string][][]Frame)
 	for i := range topics {
 		_, prs := stQueues[topics[i]]
 		if prs {
 			log.Printf("DUPLICATE_TOPIC: duplicate topics %s defined in config\n", topics[i])
 		} else {
 			log.Printf("CREATING_TOPIC: %s\n", topics[i])
-			stQueues[topics[i]] = make([]Frame, 0)
+			stQueues[topics[i]] = make([][]Frame, 0)
 		}
 	}
 	st := &MemoryStore{
