@@ -10,6 +10,7 @@ type Store interface {
 	// defines the methods required for a store to back
 	// the queueing service
 	Enqueue(destination string, message Frame) error
+	EnqueueTx(tx map[string]Frame) error
 	Pop(destination string) ([]Frame, error)
 	Len(destination string) (int, error)
 	Destinations() []string
@@ -34,6 +35,22 @@ func (m *MemoryStore) Enqueue(destination string, message Frame) error {
 	} else {
 		return errors.New("no such destination")
 	}
+}
+
+func (m *MemoryStore) EnqueueTx(tx map[string]Frame) error {
+	m.Lock()
+	defer m.Unlock()
+
+	for k, v := range tx {
+		q, prs := m.Queues[k]
+		if prs {
+			m.Queues[k] = append(q, []Frame{v})
+		} else {
+			return errors.New("bad destination for at least one frame")
+		}
+	}
+
+	return nil
 }
 
 func (m *MemoryStore) Pop(destination string) ([]Frame, error) {

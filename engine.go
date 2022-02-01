@@ -124,6 +124,16 @@ func (e *Engine) Start() error {
 						log.Printf("ERROR: client %s write error: %s\n", msg.ID, err)
 					}
 				}
+			case COMMIT:
+				err = e.handleCommit(msg, frame)
+				if err != nil {
+					err := fmt.Errorf("handleCommit: %v", err)
+					log.Println(err)
+					err = e.handleError(msg, err)
+					if err != nil {
+						log.Printf("handleError: client %s: %v\n", msg.ID, err)
+					}
+				}
 			}
 		} else if msg.Type == CONNECTION_CLOSED {
 			e.SM.UnsubscribeAll(msg.ID)
@@ -239,11 +249,7 @@ func (e *Engine) handleSend(msg CnxMgrMsg, frame Frame) error {
 		return e.TM.AddFrame(tx, msg.ID, txFrame)
 	}
 
-	messageFrame := Frame{
-		Command: MESSAGE,
-		Headers: newHeaders,
-		Body:    frame.Body,
-	}
+	messageFrame := prepareMessage(frame)
 
 	return e.Store.Enqueue(dest, messageFrame)
 }
@@ -264,6 +270,44 @@ func (e *Engine) handleAbort(msg CnxMgrMsg, frame Frame) error {
 	}
 
 	return e.TM.AbortTransaction(txId, msg.ID)
+}
+
+func (e *Engine) handleCommit(msg CnxMgrMsg, frame Frame) error {
+	// 1) receive transaction
+	// 2) Process all frames in transaction to MESSAGE
+	// 3) Enqueue Tx []Frame with e.Store.EnqueueTx
+	txId, ok := frame.Headers["transaction"]
+	if !ok {
+		return fmt.Errorf("commit %s: no transaction header", msg.ID)
+	}
+
+	tx, err := e.TM.CommitTransaction(txId, msg.ID)
+	if err != nil {
+		return fmt.Errorf("CommitTransaction: %v", err)
+	}
+
+	finalTx := make(map[string]Frame, len(tx.frames))
+	for i := range tx.frames {
+		newFr := prepareMessage(tx.frames[i])
+		dest := newFr.Headers["destination"] // should be guaranteed by initial handleSend call
+		finalTx[dest] = newFr
+	}
+
+	return e.Store.EnqueueTx(finalTx)
+}
+
+// deep copy a SEND frame to a message frame to avoid race conditions
+func prepareMessage(frame Frame) Frame {
+	newHeaders := make(map[string]string)
+	for k, v := range frame.Headers {
+		newHeaders[k] = v
+	}
+
+	return Frame{
+		Command: MESSAGE,
+		Headers: newHeaders,
+		Body:    frame.Body,
+	}
 }
 
 // msg is of type []Frame
