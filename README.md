@@ -38,7 +38,7 @@ $ docker run -d -p 32801:32801 --env STOMPER_TOPICS="/queue/env1 /queue/env2" gh
 | --------- | ------------ | ------------- | ----------- |
 | Port      | STOMPER_PORT | 32801         | TCP port server listens on |
 | Hostname  | STOMPER_HOSTNAME | localhost | hostname on which server accepts connections |
-| TCPDeadline | STOMPER_TCPDEADLINE | 30 | TCP timeout (time in seconds allowed between msg from client, 0 means no timeout) |
+| TCPDeadline | STOMPER_TCPDEADLINE | 0 | TCP timeout (time in seconds allowed between msg from client, 0 means no timeout) |
 | LogPath   | STOMPER_LOGPATH | ./stomper.log | path to log file |
 | LogToFile | STOMPER_LOGTOFILE | true     | should we stomper log to a file? |
 | LogToStdout| STOMPER_LOGTOSTDOUT| false   | should stomper log to stdout? |
