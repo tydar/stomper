@@ -43,7 +43,7 @@ $ docker run -d -p 32801:32801 --env STOMPER_TOPICS="/queue/env1 /queue/env2" gh
 | LogToFile | STOMPER_LOGTOFILE | true     | should we stomper log to a file? |
 | LogToStdout| STOMPER_LOGTOSTDOUT| false   | should stomper log to stdout? |
 | Topics    | STOMPER_TOPICS    | ["/queue/main"] | list of pub-sub topics |
-| SendWorkers| STOMPER_SENDWORKERS| 5 | Number of send worker goroutines to spawn |
+| SendWorkers| STOMPER_SENDWORKERS| 1 | Number of send worker goroutines to spawn |
 
 An example config file is provided: `stomper_config.yaml`. Stomper will look for a file with this name in either `/etc/stomper` or the directory from which it is called.
 

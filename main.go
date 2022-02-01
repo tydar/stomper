@@ -16,7 +16,7 @@ func main() {
 	viper.SetDefault("LogPath", "./stomper.log")
 	viper.SetDefault("LogToFile", true)
 	viper.SetDefault("LogToStdout", false)
-	viper.SetDefault("SendWorkers", 5)
+	viper.SetDefault("SendWorkers", 1)
 
 	// for now, we'll set one default queue to be /queue/main
 	// and topics will be created as a string array from the config file
