@@ -65,27 +65,28 @@ An example config file is provided: `stomper_config.yaml`. Stomper will look for
   * RECEIPT
   * ERROR
   * DISCONNECT
+  * BEGIN
+  * COMMIT
+  * ABORt
 * Semantics
   * Supports only pub-sub currently
 * runtime topic creation by clients
+* Configuration of worker pool for message forwarding
 
 
 ## TODO
 
 * Server connection protocol
     * Size limits?
+    * Rate limits?
     * Auth?
         * crypto/tls
 * RBAC?
 * Define semantics beyond STOMP protocol
 * Implement frame actions
-    * BEGIN
-    * COMMIT
-    * ABORT
     * ACK
     * NACK
 * Message queueing (depends on ACK, NACK)
-* Configuration of worker pool for message forwarding
 
 
 
