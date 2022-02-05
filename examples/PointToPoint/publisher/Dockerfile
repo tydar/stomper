@@ -15,7 +15,7 @@ RUN go build -o /client
 ##
 ## Deploy
 ##
-FROM gcr.io/distroless/base-debian10
+FROM gcr.io/distroless/base-debian11
 
 WORKDIR /app
 
