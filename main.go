@@ -17,6 +17,8 @@ func main() {
 	viper.SetDefault("LogToFile", true)
 	viper.SetDefault("LogToStdout", false)
 	viper.SetDefault("SendWorkers", 1)
+	viper.SetDefault("MetricsServer", false)
+	viper.SetDefault("MetricsAddress", ":8080")
 
 	// for now, we'll set one default queue to be /queue/main
 	// and topics will be created as a string array from the config file
@@ -77,7 +79,7 @@ func main() {
 		Queues: stQueues,
 	}
 
-	e := NewEngine(st, cm, comms, viper.GetInt("SendWorkers"))
+	e := NewEngine(st, cm, comms, viper.GetInt("SendWorkers"), viper.GetBool("MetricsServer"), viper.GetString("MetricsAddress"))
 	err = e.Start()
 	if err != nil {
 		log.Fatal(err)
