@@ -65,6 +65,7 @@ type metricsResponse struct {
 	ReceivedCount   uint64
 	ErrorCount      uint64
 	ServerStartTime time.Time
+	Timestamp       time.Time
 }
 
 func (ms *MetricsService) ListenAndServeJSON(addr string) {
@@ -75,6 +76,7 @@ func (ms *MetricsService) ListenAndServeJSON(addr string) {
 			ReceivedCount:   ms.GetReceivedCount(),
 			ErrorCount:      ms.GetErrorCount(),
 			ServerStartTime: ms.GetServerStartTime(),
+			Timestamp:       time.Now(),
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(respStruct)
