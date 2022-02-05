@@ -7,22 +7,28 @@ import (
 )
 
 type Engine struct {
-	CM          *ConnectionManager
-	SM          *SubscriptionManager
-	TM          *TransactionManager
-	Incoming    chan CnxMgrMsg
-	Store       Store
-	SendWorkers int
+	CM            *ConnectionManager
+	SM            *SubscriptionManager
+	TM            *TransactionManager
+	MS            *MetricsService
+	metricsServer bool
+	msAddr        string
+	Incoming      chan CnxMgrMsg
+	Store         Store
+	SendWorkers   int
 }
 
-func NewEngine(st Store, cm *ConnectionManager, inc chan CnxMgrMsg, sendWorkers int) *Engine {
+func NewEngine(st Store, cm *ConnectionManager, inc chan CnxMgrMsg, sendWorkers int, metricsServer bool, msAddr string) *Engine {
 	return &Engine{
-		CM:          cm,
-		Store:       st,
-		Incoming:    inc,
-		SM:          NewSubscriptionManager(),
-		TM:          NewTransactionManager(),
-		SendWorkers: sendWorkers,
+		CM:            cm,
+		Store:         st,
+		Incoming:      inc,
+		SM:            NewSubscriptionManager(),
+		TM:            NewTransactionManager(),
+		SendWorkers:   sendWorkers,
+		MS:            NewMetricsService(),
+		metricsServer: metricsServer,
+		msAddr:        msAddr,
 	}
 }
 
@@ -35,6 +41,11 @@ func (e *Engine) Start() error {
 	// start send workers
 	go e.WorkerManager(e.SendWorkers)
 
+	// if the metrics server flag is true
+	if e.metricsServer {
+		go e.MS.ListenAndServeJSON(e.msAddr)
+	}
+
 	log.Println("Entering main loop")
 	for msg := range e.Incoming {
 		if msg.Type == FRAME {
@@ -45,6 +56,8 @@ func (e *Engine) Start() error {
 				if err2 != nil {
 					log.Printf("ERROR: client %s write error: %s\n", msg.ID, err2)
 				}
+			} else {
+				e.MS.IncReceived()
 			}
 			switch frame.Command {
 			case CONNECT:
@@ -208,6 +221,7 @@ func (e *Engine) handleError(msg CnxMgrMsg, err error) error {
 		Headers: map[string]string{"message": err.Error()},
 		Body:    "Original frame: " + msg.Msg,
 	})
+	e.MS.IncError()
 	return e.CM.Write(msg.ID, eFrame)
 }
 
@@ -339,6 +353,9 @@ func (e *Engine) SendWorker(id int, jobs <-chan SendJob) {
 				err := e.CM.Write(clientID, uFrString)
 				if err != nil {
 					log.Printf("worker %d: SEND_ERROR: %s\n", id, err)
+					e.MS.IncError()
+				} else {
+					e.MS.IncSent()
 				}
 			}
 		}
