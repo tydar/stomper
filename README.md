@@ -44,7 +44,7 @@ $ docker run -d -p 32801:32801 --env STOMPER_TOPICS="/queue/env1 /queue/env2" gh
 | LogToStdout| STOMPER_LOGTOSTDOUT| false   | should stomper log to stdout? |
 | Topics    | STOMPER_TOPICS    | ["/queue/main"] | list of pub-sub topics |
 | SendWorkers| STOMPER_SENDWORKERS| 1 | Number of send worker goroutines to spawn |
-| MetricsServer| STOMPER_METRICSERVER| false | should we expose a JSON metrics endpoint? |
+| MetricsServer| STOMPER_METRICSSERVER| false | should we expose a JSON metrics endpoint? |
 | MetricsAddress | STOMPER_METRICSADDRESS | ":8080" | address string for Metrics Service ListenAndServe call|
 
 An example config file is provided: `stomper_config.yaml`. Stomper will look for a file with this name in either `/etc/stomper` or the directory from which it is called.
