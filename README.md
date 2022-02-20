@@ -32,6 +32,14 @@ To overwrite Stomper's default settings, you can pass environment variables to t
 $ docker run -d -p 32801:32801 --env STOMPER_TOPICS="/queue/env1 /queue/env2" ghcr.io/tydar/stomper:main
 ```
 
+## Nix build support
+
+This project contains a minimal `default.nix`. To build the Stomper using Nix, you should follow these steps:
+
+1) On NixOS, ensure you are working with Go installed: `nix-shell -p go`.
+2) Run `go mod vendor` in the project directory.
+3) Run `nix build`.
+
 ## Configuration options
 
 | Parameter | ENV variable | Default Value | Description |
